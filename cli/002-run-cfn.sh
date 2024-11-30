@@ -1,0 +1,191 @@
+#!/bin/bash
+
+# remember to change permission
+# chmod 700 get-started.sh
+
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+
+export AWS_DEFAULT_PROFILE="cosc2825-devops01"
+
+echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
+echo ""
+
+mkdir ./_output
+mkdir ./_output/run-cfn
+OUTPUT_DIR="./_output/run-cfn"
+
+CFN_STACK_NAME=$1
+
+CFN_TEMPLATE_PATH=$2
+
+# https://stackoverflow.com/a/69400542
+RUN_TIME=$(date +%s)
+RUN_DATE=$(date +%F_%T)
+
+chmod 700 ./cli/004-get-public-ipv4.sh
+MY_IP=$(./cli/004-get-public-ipv4.sh)
+
+CFN_STACK_PARAMETERS="ParameterKey=MyIP,ParameterValue=$MY_IP"
+
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/validate-template.html#
+aws cloudformation validate-template \
+	--template-body file://$CFN_TEMPLATE_PATH \
+	--output json \
+	> $OUTPUT_DIR/template-validation-result.json
+
+echo "Output validation result at $OUTPUT_DIR/template-validation-result.json"
+echo ""
+
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/estimate-template-cost.html
+CFN_ESTIMATE_TEMPLATE_COST_URL=$(aws cloudformation estimate-template-cost \
+	--template-body file://$CFN_TEMPLATE_PATH \
+	--parameters $CFN_STACK_PARAMETERS \
+	--query "Url" \
+	--output text)
+
+if [[ -n "$CFN_ESTIMATE_TEMPLATE_COST_URL" ]]; then
+	echo "Generate cost estimation at $CFN_ESTIMATE_TEMPLATE_COST_URL"
+	echo ""
+else
+	echo "Fail to generate cost estimation"
+	echo ""
+fi
+
+# https://docs.aws.amazon.com/cli/latest/reference/iam/get-role.html
+CFN_ROLE_ARN=$(aws iam get-role \
+	--role-name CloudFormationRole \
+	--query "Role.Arn" \
+	--output text)
+
+echo "CloudFormation create Stack under the role: $CFN_ROLE_ARN"
+echo ""
+
+CFN_STACK_STATUS=$(aws cloudformation describe-stacks \
+	--stack-name $CFN_STACK_NAME \
+	--query "Stacks[0].StackStatus" \
+	--output text)
+
+echo "Found CloudFormation Stack:$CFN_STACK_NAME with Status:$CFN_STACK_STATUS"
+echo ""
+
+CFN_CHANGE_SET_TYPE="CREATE"
+
+if [[ "$CFN_STACK_STATUS" == "CREATE_COMPLETE" || "$CFN_STACK_STATUS" == "UPDATE_COMPLETE" || "$CFN_STACK_STATUS" == "UPDATE_ROLLBACK_COMPLETE" || "$CFN_STACK_STATUS" == "UPDATE_FAILED" || "$CFN_STACK_STATUS" == "UPDATE_ROLLBACK_FAILED" ]]; then
+	echo "Try to update Stack:$CFN_STACK_NAME"
+	CFN_CHANGE_SET_TYPE="UPDATE"
+
+	# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/detect-stack-drift.html
+	CFN_STACK_DRIFT_ID=$(aws cloudformation detect-stack-drift \
+    --stack-name $CFN_STACK_NAME \
+		--query "StackDriftDetectionId" \
+		--output text)
+
+	if [[ -n "$CFN_STACK_DRIFT_ID" ]]; then
+    echo "Stack drift detected $CFN_STACK_DRIFT_ID"
+		echo ""
+		# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/describe-stack-resource-drifts.html
+		aws cloudformation describe-stack-resource-drifts \
+			--stack-name $CFN_STACK_NAME \
+			--output json \
+			> $OUTPUT_DIR/stack-resource-drifts.json
+
+		echo "Output Stack resource drifts at $OUTPUT_DIR/stack-resource-drifts.json"
+		echo ""
+	else
+		echo "Not Stack drift detected."
+		echo ""
+	fi
+elif [[ "$CFN_STACK_STATUS" == "CREATE_FAILED" || "$CFN_STACK_STATUS" == "DELETE_FAILED" || "$CFN_STACK_STATUS" == "ROLLBACK_FAILED" || "$CFN_STACK_STATUS" == "ROLLBACK_COMPLETE" ]]; then
+  echo "Try to delete Stack:$CFN_STACK_NAME"
+	echo ""
+
+	# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/delete-stack.html
+	aws cloudformation delete-stack \
+    --stack-name $CFN_STACK_NAME
+	
+	echo "Waiting for CloudFormation Stack $CFN_STACK_NAME to be deleted..."
+	echo ""
+	aws cloudformation wait stack-delete-complete \
+		--stack-name $CFN_STACK_NAME
+fi
+
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-change-set.html
+aws cloudformation create-change-set \
+	--stack-name $CFN_STACK_NAME \
+	--change-set-name "$CFN_STACK_NAME-$RUN_TIME" \
+	--change-set-type $CFN_CHANGE_SET_TYPE \
+	--description "New change set created at $RUN_DATE" \
+	--template-body file://$CFN_TEMPLATE_PATH \
+	--parameters $CFN_STACK_PARAMETERS \
+	--role-arn $CFN_ROLE_ARN \
+	--capabilities CAPABILITY_IAM \
+	--include-nested-stacks \
+	--on-stack-failure ROLLBACK \
+	--tags "Key=Purpose,Value=Test" \
+	--output json \
+	> $OUTPUT_DIR/created-change-set.json
+
+echo "Output created ChangeSet at $OUTPUT_DIR/created-change-set.json"
+echo ""
+
+CFN_CHANGE_SET_ID=$(jq -r '.Id' $OUTPUT_DIR/created-change-set.json)
+CFN_STACK_ID=$(jq -r '.StackId' $OUTPUT_DIR/created-change-set.json)
+
+echo "Waiting for CloudFormation ChangeSet $CFN_CHANGE_SET_ID to be created..."
+echo ""
+
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/wait/
+aws cloudformation wait change-set-create-complete \
+	--stack-name $CFN_STACK_ID \
+	--change-set-name $CFN_CHANGE_SET_ID
+
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/execute-change-set.html
+aws cloudformation execute-change-set \
+	--stack-name $CFN_STACK_ID \
+	--change-set-name $CFN_CHANGE_SET_ID
+
+if [[ "$CFN_CHANGE_SET_TYPE" == "CREATE" ]]; then
+	echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be created..."
+	echo ""
+	aws cloudformation wait stack-create-complete \
+		--stack-name $CFN_STACK_ID
+else
+	echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be updated..."
+	echo ""
+	aws cloudformation wait stack-update-complete \
+		--stack-name $CFN_STACK_ID
+fi
+
+aws cloudformation describe-stacks \
+	--stack-name $CFN_STACK_NAME \
+	--output json \
+	> $OUTPUT_DIR/created-stack.json
+
+echo "Output Stack details at $OUTPUT_DIR/$CFN_STACK_NAME.json"
+echo ""
+
+chmod 700 ./cli/003-get-cfn-output-keypair.sh
+./cli/003-get-cfn-output-keypair.sh $CFN_STACK_ID NewKeyPairId my-key-pair.pem
+
+# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/list-stacks.html#
+aws cloudformation list-stacks \
+	--stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE ROLLBACK_COMPLETE IMPORT_COMPLETE \
+	--output json \
+	> $OUTPUT_DIR/active-stacks.json
+
+echo "List all active stacks at $OUTPUT_DIR/active-stacks.json"
+echo ""
+
+aws cloudformation list-stacks \
+	--stack-status-filter DELETE_COMPLETE \
+	--output json \
+	> $OUTPUT_DIR/archived-stacks.json
+
+echo "List all archived stacks at $OUTPUT_DIR/archived-stacks.json"
+
+unset AWS_DEFAULT_PROFILE
+
+echo ""
+echo "Unset default AWS CLI profile ${AWS_DEFAULT_PROFILE}"

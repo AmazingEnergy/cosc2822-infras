@@ -1,0 +1,331 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create a free-tier EC2 instance, VPC, and Security Group.
+
+Parameters:
+  LaunchRegion:
+    Type: String
+    Default: ap-southeast-1
+    Description: resource located region
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2
+    Description: Select the AMI to use for the instance.
+  MyIP:
+    Type: String
+    Description: my ipv4
+
+Resources:
+  ############################################
+  # VPC
+
+  LabVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.0.0.0/24"
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "LabVPC"
+
+  LabVPCInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "LabVPC-igw"
+
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref LabVPC
+      InternetGatewayId: !Ref LabVPCInternetGateway
+
+  # VPC
+  ############################################
+
+  ############################################
+  # Subnet
+
+  LabVPCSubnetPublic1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !GetAtt LabVPC.VpcId
+      CidrBlock: "10.0.0.0/28"
+      MapPublicIpOnLaunch: true
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: !Ref LaunchRegion
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "LabVPC-subnet-public1"
+
+  LabVPCSubnetPrivate1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !GetAtt LabVPC.VpcId
+      CidrBlock: "10.0.0.128/28"
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: !Ref LaunchRegion
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "LabVPC-subnet-private1"
+
+  # Subnet
+  ############################################
+
+  ############################################
+  # Route Table
+
+  LabVPCRouteTablePublic:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref LabVPC
+      Tags:
+        - Key: "Name"
+          Value: "LabVPC-rtb-public"
+
+  LabVPCRouteTablePublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
+    Properties:
+      RouteTableId: !Ref LabVPCRouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref LabVPCInternetGateway
+
+  LabVPCRouteTablePrivate:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref LabVPC
+      Tags:
+        - Key: "Name"
+          Value: "LabVPC-rtb-private"
+
+  LabVPCSubnetRouteTablePublicAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref LabVPCSubnetPublic1
+      RouteTableId: !Ref LabVPCRouteTablePublic
+
+  LabVPCSubnetRouteTablePrivateAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref LabVPCSubnetPrivate1
+      RouteTableId: !Ref LabVPCRouteTablePrivate
+
+  # Route Table
+  ############################################
+
+  ############################################
+  # Security Group
+
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIP # Allow SSH
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0 # Allow all outbound traffic
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "ServerSG"
+
+  PrivateServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access from public service
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !GetAtt ServerSecurityGroup.GroupId # Allow SSH
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0 # Allow all outbound traffic
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "PrivateServerSG"
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and HTTPS access
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0 # Allow HTTP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0 # Allow HTTPS
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0 # Allow all outbound traffic
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "AppSG"
+
+  # Security Group
+  ############################################
+
+  ############################################
+  # IAM Role
+
+  Ec2BastionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ssm:GetParameter"
+                Resource: "*"
+  Ec2BastionInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - !Ref Ec2BastionRole
+
+  # IAM Role
+  ############################################
+
+  ############################################
+  # EC2
+
+  PublicInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref Ec2BastionInstanceProfile
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref LabVPCSubnetPublic1
+          GroupSet:
+            - !Ref AppSecurityGroup
+            - !Ref ServerSecurityGroup
+      KeyName: !Ref MyKeyPair
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          sudo aws ssm get-parameter \
+            --name /ec2/keypair/${MyKeyPair.KeyPairId} \
+            --with-decryption \
+            --query Parameter.Value \
+            --region ${LaunchRegion} \
+            --output text > my-key-pair.pem
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "PublicInstance"
+
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          DeviceIndex: 0
+          SubnetId: !Ref LabVPCSubnetPrivate1
+          GroupSet:
+            - !Ref PrivateServerSecurityGroup
+      KeyName: !Ref MyKeyPair
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "PrivateInstance"
+
+  # an elastic IP for our instance
+  # MyEIP:
+  #   Type: AWS::EC2::EIP
+  #   Properties:
+  #     InstanceId: !Ref PublicInstance
+
+  MyKeyPair:
+    Type: "AWS::EC2::KeyPair"
+    Properties:
+      KeyName: my-key
+      KeyType: ed25519
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "my-key"
+
+  # EC2
+  ############################################
+
+Outputs:
+  LabVPCId:
+    Description: The ID of the LabVPC
+    Value: !GetAtt LabVPC.VpcId
+
+  NewKeyPairName:
+    Description: The name of the newly created Key Pair
+    Value: !Ref MyKeyPair
+
+  NewKeyPairId:
+    Description: The ID of the newly created Key Pair
+    Value: !GetAtt MyKeyPair.KeyPairId
+
+  NewKeyPairFingerprint:
+    Description: The fingerprint of the newly created Key Pair
+    Value: !GetAtt MyKeyPair.KeyFingerprint
