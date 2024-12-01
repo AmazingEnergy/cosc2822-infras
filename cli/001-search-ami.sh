@@ -6,7 +6,7 @@
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
 
-export AWS_DEFAULT_PROFILE="cosc2825-devops01"
+export AWS_DEFAULT_PROFILE=$1
 
 echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
 echo ""

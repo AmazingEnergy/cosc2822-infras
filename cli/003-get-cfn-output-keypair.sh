@@ -6,15 +6,15 @@
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
 
-export AWS_DEFAULT_PROFILE="cosc2825-devops01"
+export AWS_DEFAULT_PROFILE=$1
 
 mkdir ./_output
 mkdir ./_output/run-cfn
 OUTPUT_DIR="./_output/run-cfn"
 
-CFN_STACK_NAME=$1
-CFN_OUTPUT_KEY=$2
-SAVE_FILE=$3
+CFN_STACK_NAME=$2
+CFN_OUTPUT_KEY=$3
+SAVE_FILE=$4
 
 # Create and download a key pair using AWS CloudFormation
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html#create-key-pair-cloudformation

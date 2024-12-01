@@ -6,7 +6,7 @@
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
 
-export AWS_DEFAULT_PROFILE="cosc2825-devops01"
+export AWS_DEFAULT_PROFILE=$1
 
 echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
 echo ""
@@ -15,7 +15,7 @@ mkdir ./_output
 mkdir ./_output/delete-stack
 OUTPUT_DIR="./_output/delete-stack"
 
-CFN_STACK_NAME=$1
+CFN_STACK_NAME=$2
 
 echo "Try to delete Stack:$CFN_STACK_NAME"
 echo ""

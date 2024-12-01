@@ -6,7 +6,7 @@
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
 
-export AWS_DEFAULT_PROFILE="cosc2825-devops01"
+export AWS_DEFAULT_PROFILE=$1
 
 echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
 echo ""
@@ -15,9 +15,9 @@ mkdir ./_output
 mkdir ./_output/run-cfn
 OUTPUT_DIR="./_output/run-cfn"
 
-CFN_STACK_NAME=$1
+CFN_STACK_NAME=$2
 
-CFN_TEMPLATE_PATH=$2
+CFN_TEMPLATE_PATH=$3
 
 # https://stackoverflow.com/a/69400542
 RUN_TIME=$(date +%s)
@@ -167,7 +167,7 @@ echo "Output Stack details at $OUTPUT_DIR/$CFN_STACK_NAME.json"
 echo ""
 
 chmod 700 ./cli/003-get-cfn-output-keypair.sh
-./cli/003-get-cfn-output-keypair.sh $CFN_STACK_ID NewKeyPairId my-key-pair.pem
+./cli/003-get-cfn-output-keypair.sh $AWS_DEFAULT_PROFILE $CFN_STACK_ID NewKeyPairId my-key-pair.pem
 
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/list-stacks.html#
 aws cloudformation list-stacks \
