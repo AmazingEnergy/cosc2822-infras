@@ -135,7 +135,65 @@ Resources:
   ############################################
 
   ############################################
+  # VPC Endpoint
+
+  SSMInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${LaunchRegion}.ssm"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  SSMMessageInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${LaunchRegion}.ssmmessages"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  EC2MessageInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${LaunchRegion}.ec2messages"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  # VPC Endpoint
+  ############################################
+
+  ############################################
   # Security Group
+
+  LabVPCEndpointSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allow HTTPS traffic from the VPC private subnet"
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !GetAtt LabVPCSubnetPrivate1.CidrBlock
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "VpcEndpointSG"
 
   ServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
