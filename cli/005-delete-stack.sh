@@ -11,11 +11,12 @@ export AWS_DEFAULT_PROFILE=$1
 echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
 echo ""
 
+CFN_STACK_NAME=$2
+
 mkdir ./_output
 mkdir ./_output/delete-stack
-OUTPUT_DIR="./_output/delete-stack"
-
-CFN_STACK_NAME=$2
+mkdir ./_output/delete-stack/$CFN_STACK_NAME
+OUTPUT_DIR="./_output/delete-stack/$CFN_STACK_NAME"
 
 echo "Try to delete Stack:$CFN_STACK_NAME"
 echo ""

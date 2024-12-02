@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create a free-tier EC2 instance, VPC, and Security Group.
+
+Parameters:
+  LaunchRegion:
+    Type: String
+    Default: ap-southeast-1
+    Description: resource located region
+  MyIP:
+    Type: String
+    Description: my ipv4
+
+Resources:
+  StaticWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: cosc2822-group6-bucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: false
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - "*"
+            ExposedHeaders:
+              - Date
+            Id: myCORSRuleId1
+            MaxAge: 3600
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "static-website-bucket"
+
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref StaticWebsiteBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - "s3:GetObject"
+            Effect: Allow
+            Principal: "*"
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${StaticWebsiteBucket}/*"
+
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt StaticWebsiteBucket.WebsiteURL
+    Description: URL for a static website hosted on S3
+  S3BucketSecureURL:
+    Value: !Sub "https://${StaticWebsiteBucket.DomainName}"
+    Description: Secure URL of S3 bucket to hold static website content
+  S3BucketName:
+    Value:
+      Fn::Select:
+        - 0
+        - Fn::Split: [".", !GetAtt StaticWebsiteBucket.DomainName]
+    Description: Name of S3 bucket to hold static website content

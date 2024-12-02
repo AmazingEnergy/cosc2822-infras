@@ -21,7 +21,7 @@ Parameters:
     Description: my ipv4
 
 Resources:
-  ############################################
+############################################
   # VPC
 
   LabVPC:
@@ -188,7 +188,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: !GetAtt LabVPCSubnetPrivate1.CidrBlock
+          CidrIp: !GetAtt LabVPC.CidrBlock
       Tags:
         - Key: "Purpose"
           Value: "Test"
@@ -303,7 +303,42 @@ Resources:
   ############################################
   # EC2
 
-  PublicInstance:
+  WebServer1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref LabVPCSubnetPublic1
+          GroupSet:
+            - !Ref AppSecurityGroup
+            - !Ref ServerSecurityGroup
+      KeyName: !Ref MyKeyPair
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          sudo systemctl start httpd
+          sudo systemctl enable httpd
+          mkdir -p /var/www/html
+          TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          echo "Acquire access token $TOKEN"
+          PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+          echo "Acquire public IPv4 $PUBLIC_IP"
+          echo "<h1>Hello World! Welcome to Web Server ${PUBLIC_IP}</h1>" > /var/www/html/index.html
+          chown -R apache:apache /var/www/html
+          chmod -R 755 /var/www/html
+          echo "Done setup web server."
+      Tags:
+        - Key: "Purpose"
+          Value: "Test"
+        - Key: "Name"
+          Value: "WebServer1"
+
+  BastionHost:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref AmiId
@@ -331,9 +366,9 @@ Resources:
         - Key: "Purpose"
           Value: "Test"
         - Key: "Name"
-          Value: "PublicInstance"
+          Value: "BastionHost"
 
-  PrivateInstance:
+  SecuredInstance1:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref AmiId
@@ -349,7 +384,7 @@ Resources:
         - Key: "Purpose"
           Value: "Test"
         - Key: "Name"
-          Value: "PrivateInstance"
+          Value: "SecuredInstance1"
 
   # an elastic IP for our instance
   # MyEIP:
