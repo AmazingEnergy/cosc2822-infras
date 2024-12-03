@@ -9,18 +9,19 @@ POSITIONAL=()
 AWS_PROFILE=${COSC2822_INFRAS_AWS_PROFILE:-"cosc2825-devops01"}
 CFN_STACK_NAME=${COSC2822_INFRAS_AWS_PROFILE:-"intro-ec2-launch"}
 CFN_TEMPLATE=${COSC2822_INFRAS_AWS_PROFILE:-"cfn-samples/00-intro/0-ec2-launch-001.yaml"}
-CFN_OUTPUT_KEY_PAIR_ID=${COSC2822_INFRAS_AWS_PROFILE:-"NewKeyPairId"}
 
 # Process named parameters
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     --action) ACTION="$2"; shift ;;
+    --region) REGION="$2"; shift ;;
     --aws-profile) AWS_PROFILE="$2"; shift ;;
     --cfn-stack-name) CFN_STACK_NAME="$2"; shift ;;
     --cfn-template) CFN_TEMPLATE="$2"; shift ;;
-    --cfn-output-key-pair-id) CFN_OUTPUT_KEY_PAIR_ID="$2"; shift ;;
     --cfn-output-key) CFN_OUTPUT_KEY="$2"; shift ;;
     --s3-resource-path) S3_RESOURCE_PATH="$2"; shift ;;
+    --route53-domain-name) ROUTE53_DOMAIN_NAME="$2"; shift ;;
+    --aws-service-name) AWS_SERVICE_NAME="$2"; shift ;;
     *) POSITIONAL+=("$1") ;; # Collect positional arguments
   esac
   shift
@@ -29,7 +30,7 @@ done
 # Restore positional arguments
 set -- "${POSITIONAL[@]}"
 
-if [[ -n "$ACTION" ]]; then
+if [[ -z "$ACTION" ]]; then
 	echo "arg --action is required."
 	exit 1
 fi
@@ -38,7 +39,7 @@ if [[ "$ACTION" == "deploy-stack" ]]; then
 	chmod 700 ./cli/002-run-cfn.sh
 	./cli/002-run-cfn.sh $AWS_PROFILE $CFN_STACK_NAME $CFN_TEMPLATE
 	chmod 700 ./cli/003-get-cfn-output-keypair.sh
-	./cli/003-get-cfn-output-keypair.sh $AWS_PROFILE $CFN_STACK_NAME $CFN_OUTPUT_KEY_PAIR_ID my-key-pair.pem
+	./cli/003-get-cfn-output-keypair.sh $AWS_PROFILE $CFN_STACK_NAME NewKeyPairId my-key-pair.pem
 	exit 0
 fi
 
@@ -68,14 +69,37 @@ if [[ "$ACTION" == "delete-s3-website-stack" ]]; then
 	exit 0
 fi
 
+if [[ "$ACTION" == "deploy-domain-stack" ]]; then
+	chmod 700 ./cli/010-register-domain.sh
+	./cli/010-register-domain.sh $AWS_PROFILE $ROUTE53_DOMAIN_NAME
+	exit 0
+fi
+
+if [[ "$ACTION" == "delete-domain-stack" ]]; then
+	chmod 700 ./cli/011-delete-domain.sh
+	./cli/011-delete-domain.sh $AWS_PROFILE $ROUTE53_DOMAIN_NAME
+	exit 0
+fi
+
+
+#######################################################
+# Utils
+#######################################################
+
 if [[ "$ACTION" == "search-ami" ]]; then
 	chmod 700 ./cli/001-search-ami.sh
-	./cli/001-search-ami.sh ${aws_profile}
+	./cli/001-search-ami.sh $AWS_PROFILE
 	exit 0
 fi
 
 if [[ "$ACTION" == "my-ip" ]]; then
 	chmod 700 ./cli/004-get-public-ipv4.sh
 	./cli/004-get-public-ipv4.sh
+	exit 0
+fi
+
+if [[ "$ACTION" == "check-service-endpoint" ]]; then
+	chmod 700 ./cli/012-check-service-endpoint.sh
+	./cli/012-check-service-endpoint.sh $AWS_PROFILE $AWS_SERVICE_NAME $REGION
 	exit 0
 fi
