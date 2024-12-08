@@ -1,0 +1,10 @@
+[
+	{
+		"ParameterKey": "DomainName",
+		"ParameterValue": "dev.grp6asm3.com"
+	},
+	{
+		"ParameterKey": "S3StaticWebsiteStack",
+		"ParameterValue": "static-website-stack"
+	}
+]

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: CloudFormation template to create a free-tier EC2 instance, VPC, and Security Group.
+Description: CloudFormation template to create a S3 Bucket host a static website.
 
 Parameters:
   StaticWebsiteBucketName:
@@ -51,15 +51,36 @@ Resources:
             Resource: !Sub "arn:${AWS::Partition}:s3:::${StaticWebsiteBucket}/*"
 
 Outputs:
-  WebsiteURL:
+  S3BucketWebsiteURL:
     Value: !GetAtt StaticWebsiteBucket.WebsiteURL
     Description: URL for a static website hosted on S3
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketWebsiteURL"
+  S3BucketDomaiName:
+    Value: !GetAtt StaticWebsiteBucket.DomainName
+    Description: URL for a static website hosted on S3
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DomainName"
+  S3BucketRegionalDomainName:
+    Value: !GetAtt StaticWebsiteBucket.RegionalDomainName
+    Description: URL for a static website hosted on S3
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketRegionalDomainName"
   S3BucketSecureURL:
     Value: !Sub "https://${StaticWebsiteBucket.DomainName}"
     Description: Secure URL of S3 bucket to hold static website content
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketSecureURL"
   S3BucketName:
     Value:
       Fn::Select:
         - 0
         - Fn::Split: [".", !GetAtt StaticWebsiteBucket.DomainName]
     Description: Name of S3 bucket to hold static website content
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketName"
