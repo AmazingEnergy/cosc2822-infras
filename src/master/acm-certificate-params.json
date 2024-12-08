@@ -1,0 +1,10 @@
+[
+	{
+		"ParameterKey": "DomainName",
+		"ParameterValue": "grp6asm3.com"
+	},
+	{
+		"ParameterKey": "HostedZoneId",
+		"ParameterValue": "Z079361229P1E0U2SUJ3V"
+	}
+]
