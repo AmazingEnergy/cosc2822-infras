@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # remember to change permission
 # chmod +x scripts.sh
