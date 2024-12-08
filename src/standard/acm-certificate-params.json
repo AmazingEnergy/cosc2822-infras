@@ -1,0 +1,6 @@
+[
+	{
+		"ParameterKey": "Route53DnsStack",
+		"ParameterValue": "<Route53DnsStack>"
+	}
+]

@@ -34,6 +34,18 @@ Resources:
         DNSName: !Ref S3WebsiteEndpoint
 
 Outputs:
+  HostedZoneId:
+    Value: !GetAtt DNS.Id
+    Description: HostedZone ID
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-HostedZoneId"
+  DomainName:
+    Value: !Ref DomainName
+    Description: HostedZone domain name
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DomainName"
   NameServers:
     Value:
       Fn::Join:

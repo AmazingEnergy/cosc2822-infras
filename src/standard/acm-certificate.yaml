@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create a ACM certificate
+
+Parameters:
+  Route53DnsStack:
+    Type: String
+    Description: stack name
+
+Resources:
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName:
+        Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName:
+            Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
+          HostedZoneId:
+            Fn::ImportValue: !Sub "${Route53DnsStack}-HostedZoneId"
+      Tags:
+        - Key: "Purpose"
+          Value: "Asm3"
+
+Outputs:
+  CertificateArn:
+    Description: The ARN of the ACM Certificate
+    Value: !Ref Certificate

@@ -5,6 +5,7 @@
 			"Effect": "Allow",
 			"Action": [
 				"s3:PutObject",
+				"s3:DeleteObject",
 				"ec2:DescribeImages",
 				"ssm:GetParameters",
 				"ssm:GetParameter",
