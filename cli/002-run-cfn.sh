@@ -6,6 +6,7 @@
 CFN_STACK_NAME=$1
 CFN_TEMPLATE_PATH=$2
 CFN_STACK_PARAMETERS_PATH=$3
+WAIT=${4:-"true"}
 
 mkdir ./_output
 mkdir ./_output/run-cfn
@@ -138,21 +139,33 @@ aws cloudformation wait change-set-create-complete \
 	--stack-name $CFN_STACK_ID \
 	--change-set-name $CFN_CHANGE_SET_ID
 
+CFN_CHANGE_SET_STATUS=$(aws cloudformation describe-change-set \
+  --change-set-name $CFN_CHANGE_SET_ID \
+	--query "Status" \
+	--output text)
+
+if [[ "$CFN_CHANGE_SET_STATUS" == "FAILED" ]]; then
+	echo "Skip ChangeSet $CFN_CHANGE_SET_ID"
+	exit 0
+fi
+
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/execute-change-set.html
 aws cloudformation execute-change-set \
 	--stack-name $CFN_STACK_ID \
 	--change-set-name $CFN_CHANGE_SET_ID
 
-if [[ "$CFN_CHANGE_SET_TYPE" == "CREATE" ]]; then
-	echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be created..."
-	echo ""
-	aws cloudformation wait stack-create-complete \
-		--stack-name $CFN_STACK_ID
-else
-	echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be updated..."
-	echo ""
-	aws cloudformation wait stack-update-complete \
-		--stack-name $CFN_STACK_ID
+if [[ "$WAIT" == "true"  ]]; then
+	if [[ "$CFN_CHANGE_SET_TYPE" == "CREATE" ]]; then
+		echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be created..."
+		echo ""
+		aws cloudformation wait stack-create-complete \
+			--stack-name $CFN_STACK_ID
+	else
+		echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be updated..."
+		echo ""
+		aws cloudformation wait stack-update-complete \
+			--stack-name $CFN_STACK_ID
+	fi
 fi
 
 aws cloudformation describe-stacks \
