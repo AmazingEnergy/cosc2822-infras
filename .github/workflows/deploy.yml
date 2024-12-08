@@ -35,7 +35,7 @@ jobs:
         shell: pwsh
         run: |
           $branch_name = '${{ github.head_ref || github.ref_name }}'
-          $env = @{main = 'dev'; sandbox = 'sandbox'; dev = 'prod'}[$branch_name] ?? 'dev'
+          $env = @{main = 'dev'; sandbox = 'sandbox'; prod = 'prod'}[$branch_name] ?? 'dev'
           get-content ./.github/${env}.wfvars |
             ConvertFrom-StringData |? {$_.Values.Count} |% { echo "$($_.Keys)=$(iex $_.Values)" >> $env:GITHUB_OUTPUT }
       - uses: ./.github/actions/get-aws-variables/
@@ -49,22 +49,9 @@ jobs:
     needs: [setup-env]
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_master_role_arn_key_name] }}
-          aws-region: ${{ needs.setup-env.outputs.aws_region }}
-      - name: Run CloudFormation on Master
-        id: run-cloud-formation-master
-        env:
-          environment: ${{ needs.setup-env.outputs.current_environment }}
-        shell: bash
-        run: |
-          ls -l
-          aws s3 ls
-          aws cloudformation list-stacks
-          chmod +x ./scripts.sh
-          ./scripts.sh --action fail-fast
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Assume Role
+        id: assume-role
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_role_arn_key_name] }}
           aws-region: ${{ needs.setup-env.outputs.aws_region }}
@@ -80,6 +67,23 @@ jobs:
         run: |
           ls -l
           aws s3 ls
-          aws cloudformation list-stacks
           chmod +x ./scripts.sh
-          ./scripts.sh --action fail-fast
+          ./scripts.sh --action deploy-all-stacks
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
+      - name: Assume Role (Master)
+        id: assume-role-master
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_master_role_arn_key_name] }}
+          aws-region: ${{ needs.setup-env.outputs.aws_region }}
+      - name: Run CloudFormation (Master)
+        id: run-cloud-formation-master
+        env:
+          environment: ${{ needs.setup-env.outputs.current_environment }}
+        shell: bash
+        run: |
+          ls -l
+          aws s3 ls
+          chmod +x ./scripts.sh
+          ./scripts.sh --action deploy-all-master-stacks
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE

@@ -5,6 +5,7 @@
 
 CFN_STACK_NAME=$1
 CFN_TEMPLATE_PATH=$2
+CFN_STACK_PARAMETERS_PATH=$3
 
 mkdir ./_output
 mkdir ./_output/run-cfn
@@ -19,7 +20,10 @@ RUN_DATE=$(date +%F_%T)
 chmod 700 ./cli/004-get-public-ipv4.sh
 MY_IP=$(./cli/004-get-public-ipv4.sh)
 
-CFN_STACK_PARAMETERS="ParameterKey=MyIP,ParameterValue=$MY_IP"
+ESCAPED_MY_IP=$(printf '%s\n' "$MY_IP" | sed -e 's/[\/&]/\\&/g')
+
+# https://www.cyberciti.biz/faq/how-to-use-sed-to-find-and-replace-text-in-files-in-linux-unix-shell/
+sed -i -e "s/<MY_IP>/$ESCAPED_MY_IP/g" ./$CFN_STACK_PARAMETERS_PATH
 
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/validate-template.html#
 aws cloudformation validate-template \
@@ -33,7 +37,7 @@ echo ""
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/estimate-template-cost.html
 CFN_ESTIMATE_TEMPLATE_COST_URL=$(aws cloudformation estimate-template-cost \
 	--template-body file://$CFN_TEMPLATE_PATH \
-	--parameters $CFN_STACK_PARAMETERS \
+	--parameters file://$CFN_STACK_PARAMETERS_PATH \
 	--query "Url" \
 	--output text)
 
@@ -111,7 +115,7 @@ aws cloudformation create-change-set \
 	--change-set-type $CFN_CHANGE_SET_TYPE \
 	--description "New change set created at $RUN_DATE" \
 	--template-body file://$CFN_TEMPLATE_PATH \
-	--parameters $CFN_STACK_PARAMETERS \
+	--parameters file://$CFN_STACK_PARAMETERS_PATH \
 	--role-arn $CFN_ROLE_ARN \
 	--capabilities CAPABILITY_IAM \
 	--include-nested-stacks \

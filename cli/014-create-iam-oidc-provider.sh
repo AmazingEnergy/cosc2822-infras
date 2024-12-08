@@ -54,8 +54,8 @@ if [[ ! -z "$EXISTING_OIDC_PROVIDER_BASIC_POLICY_ARN" && ! "$EXISTING_OIDC_PROVI
 	echo ""
 
 	aws iam detach-role-policy \
-		--role-name $OIDC_PROVIDER_ROLE_NAME \
-		--policy-arn $EXISTING_OIDC_PROVIDER_BASIC_POLICY_ARN
+		--policy-arn $EXISTING_OIDC_PROVIDER_BASIC_POLICY_ARN \
+		--role-name $OIDC_PROVIDER_ROLE_NAME
 
 	aws iam delete-policy --policy-arn $EXISTING_OIDC_PROVIDER_BASIC_POLICY_ARN
 fi
@@ -67,6 +67,10 @@ EXISTING_OIDC_PROVIDER_ROLE_ARN=$(aws iam list-roles \
 if [[ ! -z "$EXISTING_OIDC_PROVIDER_ROLE_ARN" && ! "$EXISTING_OIDC_PROVIDER_ROLE_ARN" == "None" ]]; then
 	echo "Found existing IAM OIDC Provider Role: $EXISTING_OIDC_PROVIDER_ROLE_ARN"
 	echo ""
+
+	aws iam detach-role-policy \
+		--policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+		--role-name $OIDC_PROVIDER_ROLE_NAME
 
 	aws iam delete-role --role-name $OIDC_PROVIDER_ROLE_NAME
 fi

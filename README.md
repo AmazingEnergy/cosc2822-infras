@@ -1,11 +1,53 @@
 # cosc2822-infras
 
-## Deployment
+## Management
+
+The following commands/actions is manually used by **AWS administrators**.
 
 ```bash
-chmod 700 ./scripts.sh
+chmod +x ./scripts.sh
 
-export COSC2822_INFRAS_AWS_PROFILE="cosc2825-devops01"
+./scripts.sh \
+  --action create-iam-oidc-provider \
+  --oidc-provider-url https://token.actions.githubusercontent.com \
+  --oidc-audience sts.amazonaws.com \
+  --oidc-thumbprint ffffffffffffffffffffffffffffffffffffffff \
+  --github-org AmazingEnergy
+
+./scripts.sh \
+  --action create-iam-oidc-provider \
+  --aws-profile cosc2825-devops01 \
+  --oidc-provider-url https://token.actions.githubusercontent.com \
+  --oidc-audience sts.amazonaws.com \
+  --oidc-thumbprint ffffffffffffffffffffffffffffffffffffffff \
+  --github-org AmazingEnergy
+
+```
+
+## Deployment
+
+The following commands/actions would be run by GitHub Actions.
+
+```bash
+chmod +x ./scripts.sh
+
+# deploy all stacks to working account and master account
+
+./scripts.sh --action deploy-all-stacks
+./scripts.sh --action deploy-all-master-stacks
+
+# destroy all stacks from working account and master account
+
+./scripts.sh --action destroy-all-stacks
+./scripts.sh --action destroy-all-master-stacks
+```
+
+## Local Test
+
+The following commands/actions is only used for **local testing**.
+
+```bash
+chmod +x ./scripts.sh
 
 # ec2 instances
 
@@ -47,7 +89,11 @@ export COSC2822_INFRAS_AWS_PROFILE="cosc2825-devops01"
 
 ## Utils
 
+Some useful commands/actions
+
 ```bash
+chmod +x ./scripts.sh
+
 ./scripts.sh \
   --action check-service-endpoint \
   --aws-service-name route53 \
@@ -59,25 +105,5 @@ export COSC2822_INFRAS_AWS_PROFILE="cosc2825-devops01"
   --region ap-southeast-1
 
 ./scripts.sh --action search-ami
-
-```
-
-## Management
-
-```bash
-./scripts.sh \
-  --action create-iam-oidc-provider \
-  --oidc-provider-url https://token.actions.githubusercontent.com \
-  --oidc-audience sts.amazonaws.com \
-  --oidc-thumbprint ffffffffffffffffffffffffffffffffffffffff \
-  --github-org AmazingEnergy
-
-./scripts.sh \
-  --action create-iam-oidc-provider \
-  --aws-profile cosc2825-devops01 \
-  --oidc-provider-url https://token.actions.githubusercontent.com \
-  --oidc-audience sts.amazonaws.com \
-  --oidc-thumbprint ffffffffffffffffffffffffffffffffffffffff \
-  --github-org AmazingEnergy
 
 ```

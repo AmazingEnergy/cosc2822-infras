@@ -3,6 +3,11 @@ name: Manual Destroy
 on:
   workflow_dispatch:
 
+# permission can be added at job level or workflow level
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
 jobs:
   setup-env:
     name: Discover environment
@@ -13,24 +18,20 @@ jobs:
       aws_region: ${{ steps.export.outputs.aws_region }}
       aws_access_key_name: ${{ steps.export.outputs.aws_access_key_name }}
       aws_secret_key_name: ${{ steps.export.outputs.aws_secret_key_name }}
+      aws_role_arn_key_name: ${{ steps.export.outputs.aws_role_arn_key_name }}
+      aws_master_role_arn_key_name: ${{ steps.export.outputs.aws_master_role_arn_key_name }}
       ssh_key_name: ${{ steps.export.outputs.ssh_key_name }}
-      openai_api_key_name: ${{ steps.export.outputs.openai_api_key_name }}
-      edamam_api_key_name: ${{ steps.export.outputs.edamam_api_key_name }}
-      edamam_app_id_name: ${{ steps.export.outputs.edamam_app_id_name }}
-      google_map_api_key_name: ${{ steps.export.outputs.google_map_api_key_name }}
       stripe_secret_key_name: ${{ steps.export.outputs.stripe_secret_key_name }}
       stripe_publishable_key_name: ${{ steps.export.outputs.stripe_publishable_key_name }}
       stripe_webhook_secret_name: ${{ steps.export.outputs.stripe_webhook_secret_name }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.current_branch }}
       - id: env
         name: Discover environment
         shell: pwsh
         run: |
           $branch_name = '${{ github.head_ref || github.ref_name }}'
-          $env = @{main = 'prod'; sandbox = 'sandbox'; dev = 'dev'}[$branch_name] ?? 'dev'
+          $env = @{main = 'dev'; sandbox = 'sandbox'; prod = 'prod'}[$branch_name] ?? 'dev'
           get-content ./.github/${env}.wfvars |
             ConvertFrom-StringData |? {$_.Values.Count} |% { echo "$($_.Keys)=$(iex $_.Values)" >> $env:GITHUB_OUTPUT }
       - uses: ./.github/actions/get-aws-variables/
@@ -44,31 +45,41 @@ jobs:
     needs: [setup-env]
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Assume Role
+        id: assume-role
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets[needs.setup-env.outputs.aws_access_key_name] }}
-          aws-secret-access-key: ${{ secrets[needs.setup-env.outputs.aws_secret_key_name] }}
+          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_role_arn_key_name] }}
           aws-region: ${{ needs.setup-env.outputs.aws_region }}
-          mask-aws-account-id: "no"
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: latest
-          terraform_wrapper: false
-      - name: Run Terraform
+      - name: Run CloudFormation
+        id: run-cloud-formation
         env:
           environment: ${{ needs.setup-env.outputs.current_environment }}
           ssh_key: ${{ secrets[needs.setup-env.outputs.ssh_key_name] }}
-          openai_api_key: ${{ secrets[needs.setup-env.outputs.openai_api_key_name] }}
-          edamam_api_key: ${{ secrets[needs.setup-env.outputs.edamam_api_key_name] }}
-          edamam_app_id: ${{ secrets[needs.setup-env.outputs.edamam_app_id_name] }}
-          google_map_api_key: ${{ secrets[needs.setup-env.outputs.google_map_api_key_name] }}
           stripe_secret_key: ${{ secrets[needs.setup-env.outputs.stripe_secret_key_name] }}
           stripe_publishable_key: ${{ secrets[needs.setup-env.outputs.stripe_publishable_key_name] }}
           stripe_webhook_secret: ${{ secrets[needs.setup-env.outputs.stripe_webhook_secret_name] }}
-          TF_INPUT: 0
-          TF_IN_AUTOMATION: 1
         shell: bash
-        working-directory: ${{ needs.setup-env.outputs.current_environment }}
         run: |
-          terraform init
-          terraform destroy -auto-approve -var-file="${environment}.tfvars" -var "private_key_openssh=${ssh_key}" -var "openai_api_key=${openai_api_key}" -var "edamam_api_key=${edamam_api_key}" -var "edamam_app_id=${edamam_app_id}" -var "google_map_api_key=${google_map_api_key}" -var "stripe_secret_key=${stripe_secret_key}" -var "stripe_publishable_key=${stripe_publishable_key}" -var "stripe_webhook_secret=${stripe_webhook_secret}"
+          ls -l
+          aws s3 ls
+          chmod +x ./scripts.sh
+          ./scripts.sh --action destroy-all-stacks
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
+      - name: Assume Role (Master)
+        id: assume-role-master
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_master_role_arn_key_name] }}
+          aws-region: ${{ needs.setup-env.outputs.aws_region }}
+      - name: Run CloudFormation (Master)
+        id: run-cloud-formation-master
+        env:
+          environment: ${{ needs.setup-env.outputs.current_environment }}
+        shell: bash
+        run: |
+          ls -l
+          aws s3 ls
+          chmod +x ./scripts.sh
+          ./scripts.sh --action destroy-all-master-stacks
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE

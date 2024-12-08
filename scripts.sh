@@ -18,6 +18,7 @@ while [[ "$#" -gt 0 ]]; do
     --aws-profile) AWS_PROFILE="$2"; shift ;;
     --cfn-stack-name) CFN_STACK_NAME="$2"; shift ;;
     --cfn-template) CFN_TEMPLATE="$2"; shift ;;
+    --cfn-params) CFN_TEMPLATE_PARAMS="$2"; shift ;;
     --cfn-output-key) CFN_OUTPUT_KEY="$2"; shift ;;
     --s3-resource-path) S3_RESOURCE_PATH="$2"; shift ;;
     --route53-domain-name) ROUTE53_DOMAIN_NAME="$2"; shift ;;
@@ -51,14 +52,29 @@ fi
 chmod +x ./cli/013-check-iam-caller.sh
 ./cli/013-check-iam-caller.sh
 
+#######################################################
+# Deployment
+#######################################################
+
+if [[ "$ACTION" == "deploy-all-stacks" ]]; then
+	chmod +x ./cli/002-run-cfn.sh
+	./cli/002-run-cfn.sh static-website-stack src/standard/s3-static-website.yaml src/standard/s3-static-website-params.json
+	exit 0
+fi
+
+if [[ "$ACTION" == "destroy-all-stacks" ]]; then
+	chmod +x ./cli/005-delete-stack.sh
+	./cli/005-delete-stack.sh static-website-stack
+	exit 0
+fi
 
 #######################################################
-# CloudFormation Stacks
+# Local Test
 #######################################################
 
 if [[ "$ACTION" == "deploy-stack" ]]; then
 	chmod +x ./cli/002-run-cfn.sh
-	./cli/002-run-cfn.sh $CFN_STACK_NAME $CFN_TEMPLATE
+	./cli/002-run-cfn.sh $CFN_STACK_NAME $CFN_TEMPLATE $CFN_TEMPLATE_PARAMS
 	chmod +x ./cli/003-get-cfn-output-keypair.sh
 	./cli/003-get-cfn-output-keypair.sh $CFN_STACK_NAME NewKeyPairId my-key-pair.pem
 	exit 0
@@ -72,7 +88,7 @@ fi
 
 if [[ "$ACTION" == "deploy-s3-website-stack" ]]; then
 	shell chmod +x ./cli/002-run-cfn.sh
-	shell ./cli/002-run-cfn.sh $CFN_STACK_NAME $CFN_TEMPLATE
+	shell ./cli/002-run-cfn.sh $CFN_STACK_NAME $CFN_TEMPLATE $CFN_TEMPLATE_PARAMS
 	chmod +x ./cli/008-get-cfn-output.sh
 	S3_BUCKET_NAME=$(./cli/008-get-cfn-output.sh $CFN_STACK_NAME S3BucketName)
 	shell chmod +x ./cli/007-sync-s3.sh
