@@ -1,6 +1,6 @@
 [
 	{
-		"ParameterKey": "S3StaticWebSiteStack",
-		"ParameterValue": "<S3StaticWebSiteStack>"
+		"ParameterKey": "ClientAppDomainName",
+		"ParameterValue": "app.dev.grp6asm3.com"
 	}
 ]

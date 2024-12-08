@@ -2,9 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: CloudFormation template to create a Amazon Cognito User Pool
 
 Parameters:
-  S3StaticWebSiteStack:
+  ClientAppDomainName:
     Type: String
-    Description: stack name
+    Description: User Pool client app domain name
 
 Resources:
   CognitoUserPool:
@@ -51,15 +51,9 @@ Resources:
         - profile
       CallbackURLs:
         - https://oauth.pstmn.io/v1/callback
-        - Fn::Sub:
-            - "https://${AppDomainName}/callback"
-            - AppDomainName:
-              Fn::ImportValue: !Sub "${S3StaticWebSiteStack}-DomainName"
+        - !Sub "https://${ClientAppDomainName}/callback"
       LogoutURLs:
-        - Fn::Sub:
-            - "https://${AppDomainName}/logout"
-            - AppDomainName:
-              Fn::ImportValue: !Sub "${S3StaticWebSiteStack}-DomainName"
+        - !Sub "https://${ClientAppDomainName}/logout"
 
 Outputs:
   CognitoUserPoolId:
