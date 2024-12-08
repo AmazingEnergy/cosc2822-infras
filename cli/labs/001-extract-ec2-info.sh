@@ -111,7 +111,7 @@ aws rds describe-db-instances \
   --db-instance-identifier MomPopCafeDBInstance \
   --query "DBInstances[*].[Endpoint.Address,AvailabilityZone,PreferredBackupWindow,BackupRetentionPeriod,DBInstanceStatus]"
 
-# mompopcafedbinstance.clk2i6iusv6i.us-east-1.rds.amazonaws.com
+# 
 
 aws rds modify-db-instance \
     --db-instance-identifier MomPopCafeDBInstance \
