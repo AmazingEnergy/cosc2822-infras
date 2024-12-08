@@ -4,7 +4,11 @@
 		"ParameterValue": "dev.grp6asm3.com"
 	},
 	{
-		"ParameterKey": "S3StaticWebsiteStack",
-		"ParameterValue": "static-website-stack"
+		"ParameterKey": "S3WebsiteHostedZoneId",
+		"ParameterValue": "Z3O0J2DXBE1FTB"
+	},
+	{
+		"ParameterKey": "S3WebsiteEndpoint",
+		"ParameterValue": "s3-website-ap-southeast-1.amazonaws.com"
 	}
 ]

@@ -1,13 +1,16 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: CloudFormation template to create a free-tier EC2 instance, VPC, and Security Group.
+Description: CloudFormation template to create a Route53.
 
 Parameters:
   DomainName:
     Type: String
-    Description: route53 domain name
-  S3StaticWebsiteStack:
+    Description: Route53 domain name
+  S3WebsiteHostedZoneId:
     Type: String
-    Description: name of s3-static-website stack
+    Description: Amazon S3 website HostedZone IDs (refer to Amazon Reference guide)
+  S3WebsiteEndpoint:
+    Type: String
+    Description: Amazon S3 website endpoints (refer to Amazon Reference guide)
 
 Resources:
   DNS:
@@ -19,6 +22,16 @@ Resources:
       HostedZoneTags:
         - Key: "Purpose"
           Value: "Asm3"
+
+  WebAppRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref DNS
+      Name: !Sub "app.${DomainName}"
+      Type: A
+      AliasTarget:
+        HostedZoneId: !Ref S3WebsiteHostedZoneId
+        DNSName: !Ref S3WebsiteEndpoint
 
 Outputs:
   WebsiteURL:
