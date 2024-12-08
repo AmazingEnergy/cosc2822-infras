@@ -22,6 +22,7 @@ while [[ "$#" -gt 0 ]]; do
     --cfn-output-key) CFN_OUTPUT_KEY="$2"; shift ;;
     --s3-resource-path) S3_RESOURCE_PATH="$2"; shift ;;
     --route53-domain-name) ROUTE53_DOMAIN_NAME="$2"; shift ;;
+    --route53-name-servers) ROUTE53_NAME_SERVERS="$2"; shift ;;
     --aws-service-name) AWS_SERVICE_NAME="$2"; shift ;;
     --oidc-provider-url) IAM_OIDC_PROVIDER_URL="$2"; shift ;;
     --oidc-audience) IAM_OIDC_AUDIENCE="$2"; shift ;;
@@ -71,6 +72,20 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	chmod +x ./cli/005-delete-stack.sh
 	./cli/005-delete-stack.sh static-website-stack
 	./cli/005-delete-stack.sh route53-dns-stack
+	exit 0
+fi
+
+if [[ "$ACTION" == "deploy-all-master-stacks" ]]; then
+	sed -i -e "s/<NameServers>/$ROUTE53_NAME_SERVERS/g" ./src/master/route53-dns-params.json
+
+	chmod +x ./cli/002-run-cfn.sh
+	./cli/002-run-cfn.sh master-route53-dns-stack src/master/route53-dns.yaml src/master/route53-dns-params.json
+	exit 0
+fi
+
+if [[ "$ACTION" == "destroy-all-master-stacks" ]]; then
+	chmod +x ./cli/005-delete-stack.sh
+	./cli/005-delete-stack.sh master-route53-dns-stack
 	exit 0
 fi
 

@@ -1,0 +1,14 @@
+[
+	{
+		"ParameterKey": "HostedZoneId",
+		"ParameterValue": "Z079361229P1E0U2SUJ3V"
+	},
+	{
+		"ParameterKey": "SubdomainName",
+		"ParameterValue": "dev.grp6asm3.com"
+	},
+	{
+		"ParameterKey": "NameServers",
+		"ParameterValue": "<NameServers>"
+	}
+]

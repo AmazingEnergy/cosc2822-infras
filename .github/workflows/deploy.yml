@@ -72,6 +72,7 @@ jobs:
           ROUTE53_NAME_SERVERS=$(./cli/008-get-cfn-output.sh route53-dns-stack NameServers)
           echo "route53_name_servers=$ROUTE53_NAME_SERVERS" >> "$GITHUB_OUTPUT"
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
+          aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE
       - name: Assume Role (Master)
         id: assume-role-master
         uses: aws-actions/configure-aws-credentials@v4
@@ -88,6 +89,6 @@ jobs:
           ls -l
           aws s3 ls
           chmod +x ./scripts.sh
-          echo $route_name_servers
-          ./scripts.sh --action deploy-all-master-stacks
+          ./scripts.sh --action deploy-all-master-stacks --route53-name-servers $route_name_servers
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
+          aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE

@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create a Route53.
+
+Parameters:
+  HostedZoneId:
+    Description: The ID of the parent hosted zone (e.g., for example.com)
+    Type: String
+  SubdomainName:
+    Description: The subdomain name (e.g., sub.example.com)
+    Type: String
+  NameServers:
+    Description: A list of name servers to delegate the subdomain to
+    Type: CommaDelimitedList
+
+Resources:
+  SubNameServerRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref SubdomainName
+      Type: NS
+      TTL: 300
+      ResourceRecords: !Ref NameServers
+
+Outputs:
+  SubNameServerRecord:
+    Description: Details of the created NS record
+    Value: !Ref SubNameServerRecord
