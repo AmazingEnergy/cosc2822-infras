@@ -1,0 +1,4 @@
+# this file uses a similar format to `tfvars` so that they can be used together
+
+region="sg"
+environment="prod"

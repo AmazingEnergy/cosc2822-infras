@@ -1,0 +1,85 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      # - sandbox
+      # - prod
+
+# permission can be added at job level or workflow level
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
+jobs:
+  setup-env:
+    name: Discover environment
+    runs-on: ubuntu-22.04
+    outputs:
+      current_region: ${{ steps.env.outputs.region }}
+      current_environment: ${{ steps.env.outputs.environment }}
+      aws_region: ${{ steps.export.outputs.aws_region }}
+      aws_access_key_name: ${{ steps.export.outputs.aws_access_key_name }}
+      aws_secret_key_name: ${{ steps.export.outputs.aws_secret_key_name }}
+      aws_role_arn_key_name: ${{ steps.export.outputs.aws_role_arn_key_name }}
+      aws_master_role_arn_key_name: ${{ steps.export.outputs.aws_master_role_arn_key_name }}
+      ssh_key_name: ${{ steps.export.outputs.ssh_key_name }}
+      stripe_secret_key_name: ${{ steps.export.outputs.stripe_secret_key_name }}
+      stripe_publishable_key_name: ${{ steps.export.outputs.stripe_publishable_key_name }}
+      stripe_webhook_secret_name: ${{ steps.export.outputs.stripe_webhook_secret_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: env
+        name: Discover environment
+        shell: pwsh
+        run: |
+          $branch_name = '${{ github.head_ref || github.ref_name }}'
+          $env = @{main = 'dev'; sandbox = 'sandbox'; dev = 'prod'}[$branch_name] ?? 'dev'
+          get-content ./.github/${env}.wfvars |
+            ConvertFrom-StringData |? {$_.Values.Count} |% { echo "$($_.Keys)=$(iex $_.Values)" >> $env:GITHUB_OUTPUT }
+      - uses: ./.github/actions/get-aws-variables/
+        id: export
+        with:
+          region: ${{ steps.env.outputs.region  }}
+          environment: ${{ steps.env.outputs.environment }}
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-22.04
+    needs: [setup-env]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_master_role_arn_key_name] }}
+          aws-region: ${{ needs.setup-env.outputs.aws_region }}
+      - name: Run CloudFormation on Master
+        id: run-cloud-formation-master
+        env:
+          environment: ${{ needs.setup-env.outputs.current_environment }}
+        shell: bash
+        run: |
+          ls -l
+          aws s3 ls
+          aws cloudformation list-stacks
+          chmod +x ./scripts.sh
+          ./scripts.sh --action fail-fast
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_role_arn_key_name] }}
+          aws-region: ${{ needs.setup-env.outputs.aws_region }}
+      - name: Run CloudFormation
+        id: run-cloud-formation
+        env:
+          environment: ${{ needs.setup-env.outputs.current_environment }}
+          ssh_key: ${{ secrets[needs.setup-env.outputs.ssh_key_name] }}
+          stripe_secret_key: ${{ secrets[needs.setup-env.outputs.stripe_secret_key_name] }}
+          stripe_publishable_key: ${{ secrets[needs.setup-env.outputs.stripe_publishable_key_name] }}
+          stripe_webhook_secret: ${{ secrets[needs.setup-env.outputs.stripe_webhook_secret_name] }}
+        shell: bash
+        run: |
+          ls -l
+          aws s3 ls
+          aws cloudformation list-stacks
+          chmod +x ./scripts.sh
+          ./scripts.sh --action fail-fast

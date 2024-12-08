@@ -1,0 +1,20 @@
+name: Read Json File
+description: Read Json File
+
+inputs:
+  json-file-path:
+    description: "json-file-path"
+    required: true
+outputs:
+  json:
+    description: "json object"
+    value: ${{ steps.read-json.outputs.json }}
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      id: read-json
+      run: |
+        JSON=$(cat ${{ inputs.json-file-path }} | jq -c '') 
+        echo "$JSON"
+        echo "json=$JSON" >> "$GITHUB_OUTPUT"

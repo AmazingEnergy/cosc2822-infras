@@ -43,7 +43,6 @@ export COSC2822_INFRAS_AWS_PROFILE="cosc2825-devops01"
   --cfn-stack-name route53-domain \
   --route53-domain-name grp6asm3.com
 
-
 ```
 
 ## Utils
@@ -60,4 +59,25 @@ export COSC2822_INFRAS_AWS_PROFILE="cosc2825-devops01"
   --region ap-southeast-1
 
 ./scripts.sh --action search-ami
+
+```
+
+## Management
+
+```bash
+./scripts.sh \
+  --action create-iam-oidc-provider \
+  --oidc-provider-url https://token.actions.githubusercontent.com \
+  --oidc-audience sts.amazonaws.com \
+  --oidc-thumbprint ffffffffffffffffffffffffffffffffffffffff \
+  --github-org AmazingEnergy
+
+./scripts.sh \
+  --action create-iam-oidc-provider \
+  --aws-profile cosc2825-devops01 \
+  --oidc-provider-url https://token.actions.githubusercontent.com \
+  --oidc-audience sts.amazonaws.com \
+  --oidc-thumbprint ffffffffffffffffffffffffffffffffffffffff \
+  --github-org AmazingEnergy
+
 ```

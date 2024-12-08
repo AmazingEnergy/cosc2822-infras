@@ -1,0 +1,86 @@
+name: Get Aws Variables
+description: Extract AWS secrets (stored on github) based on region + environment
+
+inputs:
+  region:
+    description: "region e.g. au"
+    required: true
+    default: "sg"
+  environment:
+    description: "environment e.g. dev/qa/prod"
+    required: true
+outputs:
+  aws_region:
+    description: "full aws_region code"
+    value: ${{ steps.get-aws-variables.outputs.aws_region }}
+  aws_access_key_name:
+    description: "key name of aws_access_key"
+    value: ${{ steps.get-aws-variables.outputs.aws_access_key_name }}
+  aws_secret_key_name:
+    description: "key name of aws_secret_key"
+    value: ${{ steps.get-aws-variables.outputs.aws_secret_key_name }}
+  aws_role_arn_key_name:
+    description: "key name of aws_role_arn_key_name"
+    value: ${{ steps.get-aws-variables.outputs.aws_role_arn_key_name }}
+  aws_master_role_arn_key_name:
+    description: "key name of aws_master_role_arn_key_name"
+    value: ${{ steps.get-aws-variables.outputs.aws_master_role_arn_key_name }}
+  stripe_secret_key_name:
+    description: "key name of stripe_secret_key"
+    value: ${{ steps.get-aws-variables.outputs.stripe_secret_key_name }}
+  stripe_publishable_key_name:
+    description: "key name of stripe_publishable_key"
+    value: ${{ steps.get-aws-variables.outputs.stripe_publishable_key_name }}
+  stripe_webhook_secret_name:
+    description: "key name of stripe_webhook_secret"
+    value: ${{ steps.get-aws-variables.outputs.stripe_webhook_secret_name }}
+runs:
+  using: composite
+  steps:
+    - name: Get aws keys from json file
+      id: get-aws-key-names
+      uses: ./.github/actions/read-from-json/
+      with:
+        json-file-path: ./.github/workflows/configs/aws-keys.json
+    - name: Get regions from json file
+      id: get-regions
+      uses: ./.github/actions/read-from-json/
+      with:
+        json-file-path: ./.github/workflows/configs/regions.json
+    - name: Get aws variables
+      id: get-aws-variables
+      shell: bash
+      run: |
+        AWS_REGION=${{ fromJson(steps.get-regions.outputs.json)[inputs.region] }}
+        AWS_ACCESS_KEY_ID_NAME=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].AWS_ACCESS_KEY_NAME }}
+        AWS_SECRET_ACCESS_KEY_NAME=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].AWS_SECRET_ACCESS_KEY_NAME }}
+        AWS_ROLE_ARN_KEY_NAME=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].AWS_ROLE_ARN_KEY_NAME }}
+        AWS_MASTER_ROLE_ARN_KEY_NAME=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].AWS_MASTER_ROLE_ARN_KEY_NAME }}
+        SSH_KEY=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].SSH_KEY }}
+        STRIPE_SECRET_KEY=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].STRIPE_SECRET_KEY }}
+        STRIPE_PUBLISHABLE_KEY=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].STRIPE_PUBLISHABLE_KEY }}
+        STRIPE_WEBHOOK_SECRET=${{ fromJson(steps.get-aws-key-names.outputs.json)[inputs.environment].STRIPE_WEBHOOK_SECRET }}
+
+        echo "$AWS_REGION"
+        echo "$AWS_ACCESS_KEY_ID_NAME"
+        echo "$AWS_SECRET_ACCESS_KEY_NAME"
+        echo "$AWS_ROLE_ARN_KEY_NAME"
+        echo "$AWS_MASTER_ROLE_ARN_KEY_NAME"
+        echo "$SSH_KEY"
+        echo "$STRIPE_SECRET_KEY"
+        echo "$STRIPE_PUBLISHABLE_KEY"
+        echo "$STRIPE_WEBHOOK_SECRET"
+
+        echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+        echo "aws_access_key_name=$AWS_ACCESS_KEY_ID_NAME" >> "$GITHUB_OUTPUT"
+        echo "aws_secret_key_name=$AWS_SECRET_ACCESS_KEY_NAME" >> "$GITHUB_OUTPUT"
+        echo "aws_role_arn_key_name=$AWS_ROLE_ARN_KEY_NAME" >> "$GITHUB_OUTPUT"
+        echo "aws_master_role_arn_key_name=$AWS_MASTER_ROLE_ARN_KEY_NAME" >> "$GITHUB_OUTPUT"
+        echo "ssh_key_name=$SSH_KEY" >> "$GITHUB_OUTPUT"
+        echo "openai_api_key_name=$OPENAI_API_KEY" >> "$GITHUB_OUTPUT"
+        echo "edamam_api_key_name=$EDAMAM_API_KEY" >> "$GITHUB_OUTPUT"
+        echo "edamam_app_id_name=$EDAMAM_APP_ID" >> "$GITHUB_OUTPUT"
+        echo "google_map_api_key_name=$GOOGLE_MAP_API_KEY" >> "$GITHUB_OUTPUT"
+        echo "stripe_secret_key_name=$STRIPE_SECRET_KEY" >> "$GITHUB_OUTPUT"
+        echo "stripe_publishable_key_name=$STRIPE_PUBLISHABLE_KEY" >> "$GITHUB_OUTPUT"
+        echo "stripe_webhook_secret_name=$STRIPE_WEBHOOK_SECRET" >> "$GITHUB_OUTPUT"
