@@ -3,15 +3,7 @@
 # remember to change permission
 # chmod 700 get-started.sh
 
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
-
-export AWS_DEFAULT_PROFILE=$1
-
-echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
-echo ""
-
-S3_BUCKET_NAME=$2
+S3_BUCKET_NAME=$1
 
 mkdir ./_output
 mkdir ./_output/clean-s3
@@ -39,9 +31,3 @@ else
 	echo "Not found S3 bucket $S3_BUCKET_NAME"
 	echo ""
 fi
-
-
-unset AWS_DEFAULT_PROFILE
-
-echo ""
-echo "Unset default AWS CLI profile ${AWS_DEFAULT_PROFILE}"

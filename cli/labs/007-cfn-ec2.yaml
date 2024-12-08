@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lab template
+
+Parameters:
+  AmazonLinuxAMIID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  NetworkStackName:
+    Type: String
+    Description: The Name of Networking Stack
+
+Resources:
+  ###########
+  # EC2 Instance
+  ###########
+  PublicInstance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !Ref AmazonLinuxAMIID
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          GroupSet:
+            - Fn::ImportValue: !Sub "${NetworkStackName}-AppSecurityGroupId"
+          SubnetId:
+            Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCPublicSubnetId"
+
+###########
+# Outputs
+###########
+
+Outputs:
+  InstanceId:
+    Value: !GetAtt PublicInstance.InstanceId
+  InstancePublicIpv4:
+    Value: !GetAtt PublicInstance.PublicIp
+  InstancePublicDnsName:
+    Value: !GetAtt PublicInstance.PublicDnsName

@@ -3,15 +3,7 @@
 # remember to change permission
 # chmod 700 get-started.sh
 
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
-
-export AWS_DEFAULT_PROFILE=$1
-
-echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
-echo ""
-
-DOMAIN_NAME=$2
+DOMAIN_NAME=$1
 
 mkdir ./_output
 mkdir ./_output/register-domain
@@ -65,8 +57,3 @@ do
     sleep 10
   fi
 done
-
-unset AWS_DEFAULT_PROFILE
-
-echo ""
-echo "Unset default AWS CLI profile ${AWS_DEFAULT_PROFILE}"

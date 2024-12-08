@@ -3,16 +3,8 @@
 # remember to change permission
 # chmod 700 get-started.sh
 
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
-
-export AWS_DEFAULT_PROFILE=$1
-
-echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
-echo ""
-
-CFN_STACK_NAME=$2
-CFN_OUTPUT_KEY=$3
+CFN_STACK_NAME=$1
+CFN_OUTPUT_KEY=$2
 
 # AWS CLI Filter output
 # https://docs.aws.amazon.com/cli/v1/userguide/cli-usage-filter.html
@@ -30,8 +22,3 @@ else
 	echo "CloudFormation Stack Output Name:'$CFN_OUTPUT_KEY' is not found"
 	exit 1
 fi
-
-unset AWS_DEFAULT_PROFILE
-
-echo ""
-echo "Unset default AWS CLI profile ${AWS_DEFAULT_PROFILE}"

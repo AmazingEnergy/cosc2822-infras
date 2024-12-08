@@ -3,14 +3,6 @@
 # remember to change permission
 # chmod 700 get-started.sh
 
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
-
-export AWS_DEFAULT_PROFILE=$1
-
-echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
-echo ""
-
 mkdir ./_output
 mkdir ./_output/launch-instance
 OUTPUT_DIR="./_output/launch-instance"
@@ -80,8 +72,3 @@ echo "Found latest built free-tier linux x86_64 AMI $AMI_ID"
 echo ""
 
 aws ec2 describe-images --image-id $AMI_ID > $OUTPUT_DIR/paramter-ami-details.json
-
-unset AWS_DEFAULT_PROFILE
-
-echo ""
-echo "Unset default AWS CLI profile ${AWS_DEFAULT_PROFILE}"

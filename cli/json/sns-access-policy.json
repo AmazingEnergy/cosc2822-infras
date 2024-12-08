@@ -1,0 +1,20 @@
+{
+  "Version": "2008-10-17",
+  "Id": "S3PublishPolicy",
+  "Statement": [
+    {
+      "Sid": "AllowPublishFromS3",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SNS:Publish",
+      "Resource": "arn:aws:sns:us-east-1:875675457390:s3NotificationTopic",
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:s3:*:*:mompopcafe-luu127"
+        }
+      }
+    }
+  ]
+}

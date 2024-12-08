@@ -28,4 +28,3 @@ else
   # the service doesn't support given region
   echo "us-east-1"
 fi
-

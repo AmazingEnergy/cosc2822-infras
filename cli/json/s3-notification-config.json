@@ -1,0 +1,18 @@
+{
+  "TopicConfigurations": [
+    {
+      "TopicArn": "arn:aws:sns:us-east-1:875675457390:s3NotificationTopic",
+      "Events": [ "s3:ObjectCreated:*", "s3:ObjectRemoved:*" ],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            {
+              "Name": "prefix",
+              "Value": "images/"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

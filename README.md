@@ -5,6 +5,8 @@
 ```bash
 chmod 700 ./scripts.sh
 
+export COSC2822_INFRAS_AWS_PROFILE="cosc2825-devops01"
+
 # ec2 instances
 
 ./scripts.sh \
@@ -56,4 +58,6 @@ chmod 700 ./scripts.sh
   --action check-service-endpoint \
   --aws-service-name s3 \
   --region ap-southeast-1
+
+./scripts.sh --action search-ami
 ```

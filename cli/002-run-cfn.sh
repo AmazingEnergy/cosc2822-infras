@@ -3,16 +3,8 @@
 # remember to change permission
 # chmod 700 get-started.sh
 
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
-
-export AWS_DEFAULT_PROFILE=$1
-
-echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
-echo ""
-
-CFN_STACK_NAME=$2
-CFN_TEMPLATE_PATH=$3
+CFN_STACK_NAME=$1
+CFN_TEMPLATE_PATH=$2
 
 mkdir ./_output
 mkdir ./_output/run-cfn
@@ -182,8 +174,3 @@ aws cloudformation list-stacks \
 	> $OUTPUT_DIR/archived-stacks.json
 
 echo "List all archived stacks at $OUTPUT_DIR/archived-stacks.json"
-
-unset AWS_DEFAULT_PROFILE
-
-echo ""
-echo "Unset default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
