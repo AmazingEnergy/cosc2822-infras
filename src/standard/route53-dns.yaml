@@ -34,7 +34,7 @@ Resources:
         DNSName: !Ref S3WebsiteEndpoint
 
 Outputs:
-  WebsiteURL:
+  NameServers:
     Value:
       Fn::Join:
         - ","

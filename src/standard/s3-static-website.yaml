@@ -79,7 +79,8 @@ Outputs:
     Value:
       Fn::Select:
         - 0
-        - Fn::Split: [".amazonaws.com", !GetAtt StaticWebsiteBucket.DomainName]
+        - Fn::Split:
+            [".s3.amazonaws.com", !GetAtt StaticWebsiteBucket.DomainName]
     Description: Name of S3 bucket to hold static website content
     Export:
       Name:
