@@ -74,8 +74,9 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	./cli/002-run-cfn.sh acm-certificate-stack src/standard/acm-certificate.yaml src/standard/acm-certificate-params.json us-east-1
 
 	CERTIFICATE_ARN=$(./cli/008-get-cfn-output.sh acm-certificate-stack CertificateArn us-east-1)
+	ESCAPED_CERTIFICATE_ARN=$(printf '%s\n' "$CERTIFICATE_ARN" | sed -e 's/[\/&]/\\&/g')
 	sed -i -e "s/<S3StaticWebsiteStack>/static-website-stack/g" ./src/standard/cloud-front-params.json
-	sed -i -e "s/<CertificateArn>/$CERTIFICATE_ARN/g" ./src/standard/cloud-front-params.json
+	sed -i -e "s/<CertificateArn>/$ESCAPED_CERTIFICATE_ARN/g" ./src/standard/cloud-front-params.json
 	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
 
 	./cli/002-run-cfn.sh cloud-front-stack src/standard/cloud-front.yaml src/standard/cloud-front-params.json $REGION

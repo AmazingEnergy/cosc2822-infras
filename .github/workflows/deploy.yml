@@ -70,6 +70,8 @@ jobs:
           echo "route53_name_servers=$ROUTE53_NAME_SERVERS" >> "$GITHUB_OUTPUT"
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
           aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region us-east-1
+          aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE --region us-east-1
       - name: Assume Role (Master)
         id: assume-role-master
         uses: aws-actions/configure-aws-credentials@v4
@@ -90,6 +92,8 @@ jobs:
           ./scripts.sh --action deploy-all-master-stacks --route53-name-servers $route_name_servers --region $region
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
           aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region us-east-1
+          aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE --region us-east-1
       - name: Assume Role (After)
         id: assume-role-after
         uses: aws-actions/configure-aws-credentials@v4
@@ -113,3 +117,5 @@ jobs:
           ./scripts.sh --action deploy-after-master --region $region
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
           aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region us-east-1
+          aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE --region us-east-1
