@@ -53,7 +53,9 @@ Resources:
   MyLoggingBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: BucketOwnerFullControl
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
 
   MyCFDistribution:
     Type: "AWS::CloudFront::Distribution"
