@@ -52,8 +52,6 @@ Resources:
 
   MyLoggingBucket:
     Type: AWS::S3::Bucket
-    Properties:
-      BucketName: my-logging-bucket
 
   MyCFDistribution:
     Type: "AWS::CloudFront::Distribution"
