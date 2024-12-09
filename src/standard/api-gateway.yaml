@@ -32,21 +32,6 @@ Resources:
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
 
-  DevStage:
-    Type: "AWS::ApiGateway::Stage"
-    Properties:
-      RestApiId: !Ref ApiGateway
-      # DeploymentId: !Ref Deployment
-      StageName: "dev"
-      Description: "dev stage"
-      MethodSettings:
-        - ResourcePath: /\*/\*
-          LoggingLevel: INFO
-          DataTraceEnabled: false
-          MetricsEnabled: false
-          ThrottlingBurstLimit: 100
-          ThrottlingRateLimit: 100
-
   ###############################################
   # Custom Domain
   ###############################################
@@ -67,18 +52,6 @@ Resources:
         Types:
           - REGIONAL
       SecurityPolicy: "TLS_1_2"
-
-  MyApiMapping:
-    Type: "AWS::ApiGatewayV2::ApiMapping"
-    Properties:
-      DomainName:
-        Fn::Sub:
-          - "service.${DomainName}"
-          - DomainName:
-              Fn::ImportValue:
-                Fn::Sub: "${Route53DNSStack}-DomainName"
-      ApiId: !Ref ApiGateway
-      Stage: !Ref DevStage
 
   RegionalCertificate:
     Type: AWS::CertificateManager::Certificate
@@ -188,6 +161,10 @@ Resources:
             ResponseTemplates:
               "application/json": '{ "message": "Hello! You are not authenticated, but you are able to access this endpoint." }'
 
+  ###############################################
+  # API Gateway Deployment
+  ###############################################
+
   Deployment:
     Type: AWS::ApiGateway::Deployment
     Properties:
@@ -198,13 +175,52 @@ Resources:
       - RestrictedTestResourceMethod
       - AnnonymousTestResourceMethod
 
+  DevStage:
+    Type: "AWS::ApiGateway::Stage"
+    Properties:
+      RestApiId: !Ref ApiGateway
+      DeploymentId: !Ref Deployment
+      StageName: "dev"
+      Description: "dev stage"
+      MethodSettings:
+        - ResourcePath: /\*/\*
+          LoggingLevel: INFO
+          DataTraceEnabled: false
+          MetricsEnabled: false
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 100
+
+  MyApiMapping:
+    Type: "AWS::ApiGatewayV2::ApiMapping"
+    Properties:
+      DomainName:
+        Fn::Sub:
+          - "service.${DomainName}"
+          - DomainName:
+              Fn::ImportValue:
+                Fn::Sub: "${Route53DNSStack}-DomainName"
+      ApiId: !Ref ApiGateway
+      Stage: !Ref DevStage
+
 Outputs:
+  ApiGateway:
+    Description: Root resource of API Gateway
+    Value: !Ref ApiGateway
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-ApiGateway"
   ApiGatewayRootResourceId:
     Description: Root resource of API Gateway
     Value: !GetAtt ApiGateway.RootResourceId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-ApiGatewayRootResourceId"
   ApiGatewayRestApiId:
     Description: REST API of API Gateway
     Value: !GetAtt ApiGateway.RestApiId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-ApiGatewayRestApiId"
   TestEndpoint:
     Description: RESTful annoymous test endpoint
     Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/annoynousGreating"
