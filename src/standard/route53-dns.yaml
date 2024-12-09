@@ -48,7 +48,7 @@ Outputs:
     Description: Wildcard Root domain name
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-WildcardDomainName"
+        Fn::Sub: "${AWS::StackName}-WildcardRootDomainName"
   HostedZoneId:
     Value: !GetAtt DNS.Id
     Description: HostedZone ID
