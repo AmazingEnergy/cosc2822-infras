@@ -61,7 +61,10 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_200
         ViewerCertificate:
-          CloudFrontDefaultCertificate: "true"
+          AcmCertificateArn:
+            Fn::ImportValue: !Sub "${ACMCertificateStack}-CertificateArn"
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1
 
 Outputs:
   MyCFDistributionId:
