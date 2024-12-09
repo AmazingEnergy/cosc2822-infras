@@ -5,9 +5,15 @@ Parameters:
   S3StaticWebsiteStack:
     Type: String
     Description: stack name
+  Route53DNSStack:
+    Type: String
+    Description: stack name
   CertificateArn:
     Type: String
     Description: ACM Certificate ARN
+  CloudFrontHostedZone:
+    Type: String
+    Description: https://docs.aws.amazon.com/general/latest/gr/cf_region.html#cf_region
 
 Resources:
   MyLoggingBucket:
@@ -64,6 +70,25 @@ Resources:
           AcmCertificateArn: !Ref CertificateArn
           SslSupportMethod: sni-only
           MinimumProtocolVersion: TLSv1
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset-aliastarget.html
+
+  WebAppRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
+      Name:
+        Fn::Sub:
+          - "app.${DomainName}"
+          - DomainName:
+              Fn::ImportValue:
+                Fn::Sub: "${Route53DNSStack}-DomainName"
+      Type: A
+      AliasTarget:
+        HostedZoneId: !Ref CloudFrontHostedZone
+        DNSName: !GetAtt MyCFDistribution.DomainName
+        EvaluateTargetHealth: false
 
 Outputs:
   MyCFDistributionId:

@@ -6,5 +6,13 @@
 	{
 		"ParameterKey": "CertificateArn",
 		"ParameterValue": "<CertificateArn>"
+	},
+	{
+		"ParameterKey": "Route53DNSStack",
+		"ParameterValue": "<Route53DNSStack>"
+	},
+	{
+		"ParameterKey": "CloudFrontHostedZone",
+		"ParameterValue": "Z2FDTNDATAQYW2"
 	}
 ]

@@ -10,10 +10,10 @@ Parameters:
     Description: Route53 domain name
   S3WebsiteHostedZoneId:
     Type: String
-    Description: Amazon S3 website HostedZone IDs (refer to Amazon Reference guide)
+    Description: https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_website_region_endpoints
   S3WebsiteEndpoint:
     Type: String
-    Description: Amazon S3 website endpoints (refer to Amazon Reference guide)
+    Description: https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_website_region_endpoints
 
 Resources:
   DNS:
@@ -26,15 +26,17 @@ Resources:
         - Key: "Purpose"
           Value: "Asm3"
 
-  WebAppRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref DNS
-      Name: !Sub "app.${DomainName}"
-      Type: A
-      AliasTarget:
-        HostedZoneId: !Ref S3WebsiteHostedZoneId
-        DNSName: !Ref S3WebsiteEndpoint
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset-aliastarget.html
+
+  # WebAppRecord:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #     HostedZoneId: !Ref DNS
+  #     Name: !Sub "app.${DomainName}"
+  #     Type: A
+  #     AliasTarget:
+  #       HostedZoneId: !Ref S3WebsiteHostedZoneId
+  #       DNSName: !Ref S3WebsiteEndpoint
 
 Outputs:
   RootDomainName:
