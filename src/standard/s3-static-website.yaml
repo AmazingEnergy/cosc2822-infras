@@ -60,6 +60,13 @@ Resources:
         Origins:
           - DomainName: !GetAtt StaticWebsiteBucket.DomainName
             Id: S3OriginId
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols:
+                - TLSv1.2
+                - TLSv1.1
         Enabled: "true"
         Comment: MY CloudFront distribution
         DefaultRootObject: index.html
