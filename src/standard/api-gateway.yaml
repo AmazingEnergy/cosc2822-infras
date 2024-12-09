@@ -32,35 +32,41 @@ Resources:
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
 
-  # Deployment:
-  #   Type: AWS::ApiGatewayV2::Deployment
-  #   Properties:
-  #     ApiId: !Ref ApiGateway
-  #   DependsOn:
-  #     - MyRestrictedTestMethodOnResource
-  #     - MyTestMethodOnResource
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGateway
+    DependsOn:
+      - MyRestrictedTestMethodOnResource
+      - MyTestMethodOnResource
 
   DevStage:
-    Type: "AWS::ApiGatewayV2::Stage"
+    Type: "AWS::ApiGateway::Stage"
     Properties:
-      ApiId: !Ref ApiGateway
-      AutoDeploy: true
-      # DeploymentId: !Ref Deployment
+      RestApiId: !Ref ApiGateway
+      DeploymentId: !Ref Deployment
       StageName: "dev"
       Description: "dev stage"
-      DefaultRouteSettings:
-        LoggingLevel: INFO
-        DataTraceEnabled: false
-        DetailedMetricsEnabled: false
-        ThrottlingBurstLimit: 100
-        ThrottlingRateLimit: 100
+      MethodSettings:
+        - ResourcePath: /test
+          LoggingLevel: INFO
+          DataTraceEnabled: false
+          MetricsEnabled: false
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 100
+        - ResourcePath: /restrictedTest
+          LoggingLevel: INFO
+          DataTraceEnabled: false
+          MetricsEnabled: false
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 100
 
   ###############################################
   # Custom Domain
   ###############################################
 
   ApiGatewayDomain:
-    Type: "AWS::ApiGatewayV2::DomainName"
+    Type: "AWS::ApiGateway::DomainName"
     Properties:
       DomainName:
         Fn::Sub:
@@ -68,10 +74,11 @@ Resources:
           - DomainName:
               Fn::ImportValue:
                 Fn::Sub: "${Route53DNSStack}-DomainName"
-      DomainNameConfigurations:
-        - EndpointType: REGIONAL
-          CertificateArn: !Ref RegionalCertificate
-          SecurityPolicy: "TLS_1_2"
+      CertificateArn: !Ref RegionalCertificate
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      SecurityPolicy: "TLS_1_2"
 
   MyApiMapping:
     Type: "AWS::ApiGatewayV2::ApiMapping"
