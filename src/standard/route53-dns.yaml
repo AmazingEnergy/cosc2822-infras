@@ -43,9 +43,9 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-RootDomainName"
-  WildcardDomainName:
+  WildcardRootDomainName:
     Value: !Sub "*.${RootDomainName}"
-    Description: Root domain name
+    Description: Wildcard Root domain name
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-WildcardDomainName"
@@ -61,6 +61,12 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-DomainName"
+  WildcardDomainName:
+    Value: !Sub "*.${DomainName}"
+    Description: Wildcard HostedZone domain name
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-WildcardDomainName"
   NameServers:
     Value:
       Fn::Join:

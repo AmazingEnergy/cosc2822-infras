@@ -65,7 +65,7 @@ if [[ "$ACTION" == "deploy-before-master" ]]; then
 fi
 
 if [[ "$ACTION" == "deploy-after-master" ]]; then
-	DOMAIN_NAME=$(./cli/008-get-cfn-output.sh route53-dns-stack DomainName $REGION)
+	DOMAIN_NAME=$(./cli/008-get-cfn-output.sh route53-dns-stack WildcardDomainName $REGION)
 	HOSTED_ZONE_ID=$(./cli/008-get-cfn-output.sh route53-dns-stack HostedZoneId $REGION)
 	sed -i -e "s/<DomainName>/$DOMAIN_NAME/g" ./src/standard/acm-certificate-params.json
 	sed -i -e "s/<HostedZoneId>/$HOSTED_ZONE_ID/g" ./src/standard/acm-certificate-params.json
@@ -93,7 +93,7 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	chmod +x ./cli/005-delete-stack.sh
 	./cli/005-delete-stack.sh cloud-front-stack $REGION
 	./cli/005-delete-stack.sh static-website-stack $REGION
-	./cli/005-delete-stack.sh acm-certificate-stack $REGION
+	./cli/005-delete-stack.sh acm-certificate-stack us-east-1
 	./cli/005-delete-stack.sh route53-dns-stack $REGION
 	./cli/005-delete-stack.sh api-gateway-stack $REGION
 	./cli/005-delete-stack.sh cognito-stack $REGION
