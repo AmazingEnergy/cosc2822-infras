@@ -57,6 +57,10 @@ Resources:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
 
+  # Use CustomOriginConfig for S3 Bucket static website hosting
+  # https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_CustomOriginConfig.html
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-cloudfront.html#scenario-cloudfront-customorigin
+
   MyCFDistribution:
     Type: "AWS::CloudFront::Distribution"
     Properties:
@@ -78,8 +82,6 @@ Resources:
           IncludeCookies: "false"
           Bucket: !GetAtt MyLoggingBucket.DomainName
           Prefix: cloudfront
-        Aliases:
-          - !Ref StaticWebsiteBucketName
         DefaultCacheBehavior:
           Compress: "true"
           AllowedMethods:
