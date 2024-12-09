@@ -39,7 +39,7 @@ Resources:
     Properties:
       UserPoolId: !Ref CognitoUserPool
       ClientName: EasyShopApp
-      GenerateSecret: false
+      GenerateSecret: true
       ExplicitAuthFlows:
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
@@ -68,3 +68,6 @@ Outputs:
   CognitoUserPoolClientId:
     Description: ID of the Cognito User Pool Client
     Value: !GetAtt CognitoUserPoolClient.ClientId
+  CognitoUserPoolClientSecret:
+    Description: Secret of the Cognito User Pool Client
+    Value: !GetAtt CognitoUserPoolClient.ClientSecret
