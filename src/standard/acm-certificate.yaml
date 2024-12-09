@@ -12,12 +12,10 @@ Resources:
     Properties:
       DomainName:
         Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
-      ValidationMethod: DNS
+      ValidationMethod: EMAIL
       DomainValidationOptions:
         - DomainName:
             Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
-          HostedZoneId:
-            Fn::ImportValue: !Sub "${Route53DnsStack}-HostedZoneId"
           ValidationDomain:
             Fn::ImportValue: !Sub "${Route53DnsStack}-RootDomainName"
       Tags:
