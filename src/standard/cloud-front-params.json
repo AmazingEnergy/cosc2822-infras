@@ -4,7 +4,7 @@
 		"ParameterValue": "<S3StaticWebsiteStack>"
 	},
 	{
-		"ParameterKey": "ACMCertificateStack",
-		"ParameterValue": "<ACMCertificateStack>"
+		"ParameterKey": "CertificateArn",
+		"ParameterValue": "<CertificateArn>"
 	}
 ]

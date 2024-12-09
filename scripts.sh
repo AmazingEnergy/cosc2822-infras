@@ -69,12 +69,15 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	HOSTED_ZONE_ID=$(./cli/008-get-cfn-output.sh route53-dns-stack HostedZoneId $REGION)
 	sed -i -e "s/<DomainName>/$DOMAIN_NAME/g" ./src/standard/acm-certificate-params.json
 	sed -i -e "s/<HostedZoneId>/$HOSTED_ZONE_ID/g" ./src/standard/acm-certificate-params.json
-	sed -i -e "s/<S3StaticWebsiteStack>/static-website-stack/g" ./src/standard/cloud-front-params.json
-	sed -i -e "s/<ACMCertificateStack>/acm-certificate-stack/g" ./src/standard/cloud-front-params.json
-	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
 
 	chmod +x ./cli/002-run-cfn.sh
 	./cli/002-run-cfn.sh acm-certificate-stack src/standard/acm-certificate.yaml src/standard/acm-certificate-params.json us-east-1
+
+	CERTIFICATE_ARN=$(./cli/008-get-cfn-output.sh acm-certificate-stack CertificateArn us-east-1)
+	sed -i -e "s/<S3StaticWebsiteStack>/static-website-stack/g" ./src/standard/cloud-front-params.json
+	sed -i -e "s/<CertificateArn>/$CERTIFICATE_ARN/g" ./src/standard/cloud-front-params.json
+	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
+
 	./cli/002-run-cfn.sh cloud-front-stack src/standard/cloud-front.yaml src/standard/cloud-front-params.json $REGION
 	./cli/002-run-cfn.sh cognito-stack src/standard/cognito.yaml src/standard/cognito-params.json $REGION
 	./cli/002-run-cfn.sh api-gateway-stack src/standard/api-gateway.yaml src/standard/api-gateway-params.json $REGION

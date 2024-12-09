@@ -5,9 +5,9 @@ Parameters:
   S3StaticWebsiteStack:
     Type: String
     Description: stack name
-  ACMCertificateStack:
+  CertificateArn:
     Type: String
-    Description: stack name
+    Description: ACM Certificate ARN
 
 Resources:
   MyLoggingBucket:
@@ -61,8 +61,7 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_200
         ViewerCertificate:
-          AcmCertificateArn:
-            Fn::ImportValue: !Sub "${ACMCertificateStack}-CertificateArn"
+          AcmCertificateArn: !Ref CertificateArn
           SslSupportMethod: sni-only
           MinimumProtocolVersion: TLSv1
 
