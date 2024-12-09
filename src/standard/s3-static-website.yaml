@@ -60,8 +60,7 @@ Resources:
         Origins:
           - DomainName: !GetAtt StaticWebsiteBucket.DomainName
             Id: S3OriginId
-            S3OriginConfig:
-              OriginAccessIdentity: origin-access-identity/cloudfront/E127EXAMPLE51Z
+            OriginPath: /
         Enabled: "true"
         Comment: MY CloudFront distribution
         DefaultRootObject: index.html
@@ -125,3 +124,15 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-S3BucketName"
+  MyCFDistributionId:
+    Value: !GetAtt MyCFDistribution.Id
+    Description: Id of CloudFront distribution
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-MyCFDistributionId"
+  MyCFDistributionDomainName:
+    Value: !GetAtt MyCFDistribution.DomainName
+    Description: Domain name of CloudFront distribution
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-MyCFDistributionDomainName"
