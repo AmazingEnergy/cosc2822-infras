@@ -1,6 +1,10 @@
 [
 	{
-		"ParameterKey": "Route53DnsStack",
-		"ParameterValue": "<Route53DnsStack>"
+		"ParameterKey": "DomainName",
+		"ParameterValue": "<DomainName>"
+	},
+	{
+		"ParameterKey": "HostedZoneId",
+		"ParameterValue": "<HostedZoneId>"
 	}
 ]

@@ -65,7 +65,10 @@ if [[ "$ACTION" == "deploy-before-master" ]]; then
 fi
 
 if [[ "$ACTION" == "deploy-after-master" ]]; then
-	sed -i -e "s/<Route53DnsStack>/route53-dns-stack/g" ./src/standard/acm-certificate-params.json
+	DOMAIN_NAME=$(./cli/008-get-cfn-output.sh route53-dns-stack DomainName $REGION)
+	HOSTED_ZONE_ID=$(./cli/008-get-cfn-output.sh route53-dns-stack HostedZoneId $REGION)
+	sed -i -e "s/<DomainName>/$DOMAIN_NAME/g" ./src/standard/acm-certificate-params.json
+	sed -i -e "s/<HostedZoneId>/$HOSTED_ZONE_ID/g" ./src/standard/acm-certificate-params.json
 	sed -i -e "s/<S3StaticWebsiteStack>/static-website-stack/g" ./src/standard/cloud-front-params.json
 	sed -i -e "s/<ACMCertificateStack>/acm-certificate-stack/g" ./src/standard/cloud-front-params.json
 	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
