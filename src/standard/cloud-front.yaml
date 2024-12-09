@@ -103,3 +103,8 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-MyCFDistributionDomainName"
+  S3BucketName:
+    Value:
+      Fn::Select:
+        - 0
+        - Fn::Split: [".s3.amazonaws.com", !GetAtt MyLoggingBucket.DomainName]

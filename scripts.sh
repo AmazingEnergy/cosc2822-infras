@@ -23,6 +23,7 @@ while [[ "$#" -gt 0 ]]; do
     --s3-resource-path) S3_RESOURCE_PATH="$2"; shift ;;
     --route53-domain-name) ROUTE53_DOMAIN_NAME="$2"; shift ;;
     --route53-name-servers) ROUTE53_NAME_SERVERS="$2"; shift ;;
+    --route53-hosted-zone) ROUTE53_HOSTED_ZONE="$2"; shift ;;
     --aws-service-name) AWS_SERVICE_NAME="$2"; shift ;;
     --oidc-provider-url) IAM_OIDC_PROVIDER_URL="$2"; shift ;;
     --oidc-audience) IAM_OIDC_AUDIENCE="$2"; shift ;;
@@ -78,6 +79,7 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	sed -i -e "s/<S3StaticWebsiteStack>/static-website-stack/g" ./src/standard/cloud-front-params.json
 	sed -i -e "s/<Route53DNSStack>/route53-dns-stack/g" ./src/standard/cloud-front-params.json
 	sed -i -e "s/<CertificateArn>/$ESCAPED_CERTIFICATE_ARN/g" ./src/standard/cloud-front-params.json
+	sed -i -e "s/<Route53DNSStack>/route53-dns-stack/g" ./src/standard/api-gateway-params.json
 	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
 
 	./cli/002-run-cfn.sh cloud-front-stack src/standard/cloud-front.yaml src/standard/cloud-front-params.json $REGION
@@ -88,15 +90,18 @@ fi
 
 if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	chmod +x ./cli/008-get-cfn-output.sh
-	S3_BUCKET_NAME=$(./cli/008-get-cfn-output.sh static-website-stack S3BucketName $REGION)
 	chmod +x ./cli/009-clean-s3.sh
+	S3_BUCKET_NAME=$(./cli/008-get-cfn-output.sh static-website-stack S3BucketName $REGION)
 	./cli/009-clean-s3.sh $S3_BUCKET_NAME $REGION
+	S3_BUCKET_NAME=$(./cli/008-get-cfn-output.sh cloud-front-stack S3BucketName $REGION)
+	./cli/009-clean-s3.sh $S3_BUCKET_NAME $REGION
+
 	chmod +x ./cli/005-delete-stack.sh
 	./cli/005-delete-stack.sh cloud-front-stack $REGION
 	./cli/005-delete-stack.sh static-website-stack $REGION
 	./cli/005-delete-stack.sh acm-certificate-stack us-east-1
-	./cli/005-delete-stack.sh route53-dns-stack $REGION
 	./cli/005-delete-stack.sh api-gateway-stack $REGION
+	./cli/005-delete-stack.sh route53-dns-stack $REGION
 	./cli/005-delete-stack.sh cognito-stack $REGION
 	exit 0
 fi
@@ -187,6 +192,12 @@ fi
 if [[ "$ACTION" == "check-service-endpoint" ]]; then
 	chmod +x ./cli/012-check-service-endpoint.sh
 	./cli/012-check-service-endpoint.sh $AWS_PROFILE $AWS_SERVICE_NAME $REGION
+	exit 0
+fi
+
+if [[ "$ACTION" == "clean-hosted-zone" ]]; then
+	chmod +x ./cli/015-clean-hosted-zone.sh
+	./cli/015-clean-hosted-zone.sh $ROUTE53_HOSTED_ZONE
 	exit 0
 fi
 

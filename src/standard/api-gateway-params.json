@@ -6,5 +6,9 @@
 	{
 		"ParameterKey": "CognitoStack",
 		"ParameterValue": "<CognitoStack>"
+	},
+	{
+		"ParameterKey": "Route53DNSStack",
+		"ParameterValue": "<Route53DNSStack>"
 	}
 ]

@@ -8,6 +8,9 @@ Parameters:
   CognitoStack:
     Type: String
     Description: stack name
+  Route53DNSStack:
+    Type: String
+    Description: stack name
 
 Resources:
   ApiGateway:
@@ -25,13 +28,95 @@ Resources:
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
 
+  MyRestrictedTestMethodResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: "restrictedTest"
+
+  MyRestrictedTestMethodOnResource:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref MyRestrictedTestMethodResource
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: "COGNITO_USER_POOLS"
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      RequestParameters: {}
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Content-Type: true
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Content-Type: "'application/json'"
+            ResponseTemplates:
+              "application/json": '{ "message": "Hello! You were successfully authenticated." }'
+
+  MyTestMethodResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: "test"
+
+  MyTestMethodOnResource:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref MyTestMethodResource
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: "None"
+      RequestParameters: {}
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Content-Type: true
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Content-Type: "'application/json'"
+            ResponseTemplates:
+              "application/json": '{ "message": "Hello! You are not authenticated, but you are able to access this endpoint." }'
+
+  MyTestApiStage:
+    Type: "AWS::ApiGateway::Stage"
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: "dev"
+      Description: "dev stage"
+      MethodSettings:
+        - ResourcePath: /test
+          HttpMethod: GET
+          LoggingLevel: INFO
+          DataTraceEnabled: false
+          MetricsEnabled: false
+          ThrottlingBurstLimit: 555
+          ThrottlingRateLimit: 1000
+        - ResourcePath: /restrictedTest
+          HttpMethod: GET
+          LoggingLevel: INFO
+          DataTraceEnabled: false
+          MetricsEnabled: false
+          ThrottlingBurstLimit: 555
+          ThrottlingRateLimit: 1000
+
 Outputs:
-  ApiEndpoint:
-    Description: The endpoint URL for the API
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod/myresource"
   ApiGatewayRootResourceId:
     Description: Root resource of API Gateway
     Value: !GetAtt ApiGateway.RootResourceId
   ApiGatewayRestApiId:
     Description: REST API of API Gateway
     Value: !GetAtt ApiGateway.RestApiId
+  TestEndpoint:
+    Description: RESTful /test endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test"
+  RestrictedTestEndpoint:
+    Description: RESTful /restrictedTest endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/restrictedTest"
