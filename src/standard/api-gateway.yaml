@@ -182,7 +182,8 @@ Resources:
       StageName: "dev"
       Description: "dev stage"
       MethodSettings:
-        - ResourcePath: /\*/\*
+        - HttpMethod: "*"
+          ResourcePath: "/*"
           LoggingLevel: INFO
           DataTraceEnabled: false
           MetricsEnabled: false
