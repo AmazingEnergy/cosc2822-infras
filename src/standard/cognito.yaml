@@ -59,15 +59,30 @@ Outputs:
   CognitoUserPoolId:
     Description: ID of the Cognito User Pool
     Value: !GetAtt CognitoUserPool.UserPoolId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CognitoUserPoolId"
   CognitoUserPoolProviderName:
     Description: Provider of the Cognito User Pool
     Value: !GetAtt CognitoUserPool.ProviderName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CognitoUserPoolProviderName"
   CognitoUserPoolProviderUrl:
     Description: Provider URL of the Cognito User Pool
     Value: !GetAtt CognitoUserPool.ProviderURL
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CognitoUserPoolProviderUrl"
   CognitoUserPoolClientId:
     Description: ID of the Cognito User Pool Client
     Value: !GetAtt CognitoUserPoolClient.ClientId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CognitoUserPoolClientId"
   CognitoUserPoolClientSecret:
     Description: Secret of the Cognito User Pool Client
     Value: !GetAtt CognitoUserPoolClient.ClientSecret
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CognitoUserPoolClientSecret"
