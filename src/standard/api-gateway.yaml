@@ -2,17 +2,21 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: CloudFormation template to create a API Gateway
 
 Parameters:
-  ApiGatewayName:
-    Type: String
-    Description: API Gateway name
   CognitoStack:
     Type: String
     Description: stack name
   Route53DNSStack:
     Type: String
     Description: stack name
+  ApiGatewayName:
+    Type: String
+    Description: API Gateway name
 
 Resources:
+  ###############################################
+  # API Gateway
+  ###############################################
+
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -27,6 +31,103 @@ Resources:
       IdentitySource: method.request.header.Authorization
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
+
+  # Deployment:
+  #   Type: AWS::ApiGatewayV2::Deployment
+  #   Properties:
+  #     ApiId: !Ref ApiGateway
+  #   DependsOn:
+  #     - MyRestrictedTestMethodOnResource
+  #     - MyTestMethodOnResource
+
+  DevStage:
+    Type: "AWS::ApiGatewayV2::Stage"
+    Properties:
+      ApiId: !Ref ApiGateway
+      AutoDeploy: true
+      # DeploymentId: !Ref Deployment
+      StageName: "dev"
+      Description: "dev stage"
+      DefaultRouteSettings:
+        LoggingLevel: INFO
+        DataTraceEnabled: false
+        DetailedMetricsEnabled: false
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 100
+
+  ###############################################
+  # Custom Domain
+  ###############################################
+
+  ApiGatewayDomain:
+    Type: "AWS::ApiGatewayV2::DomainName"
+    Properties:
+      DomainName:
+        Fn::Sub:
+          - "service.${DomainName}"
+          - DomainName:
+              Fn::ImportValue:
+                Fn::Sub: "${Route53DNSStack}-DomainName"
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Ref RegionalCertificate
+          SecurityPolicy: "TLS_1_2"
+
+  MyApiMapping:
+    Type: "AWS::ApiGatewayV2::ApiMapping"
+    Properties:
+      DomainName:
+        Fn::Sub:
+          - "service.${DomainName}"
+          - DomainName:
+              Fn::ImportValue:
+                Fn::Sub: "${Route53DNSStack}-DomainName"
+      ApiId: !Ref ApiGateway
+      Stage: !Ref DevStage
+
+  RegionalCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName:
+        Fn::Sub:
+          - "service.${DomainName}"
+          - DomainName:
+              Fn::ImportValue:
+                Fn::Sub: "${Route53DNSStack}-DomainName"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName:
+            Fn::Sub:
+              - "service.${DomainName}"
+              - DomainName:
+                  Fn::ImportValue:
+                    Fn::Sub: "${Route53DNSStack}-DomainName"
+          HostedZoneId:
+            Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
+      Tags:
+        - Key: "Purpose"
+          Value: "Asm3"
+
+  MyAliasRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
+      Name:
+        Fn::Sub:
+          - "service.${DomainName}"
+          - DomainName:
+              Fn::ImportValue:
+                Fn::Sub: "${Route53DNSStack}-DomainName"
+      Type: "A"
+      AliasTarget:
+        HostedZoneId: !GetAtt ApiGatewayDomain.RegionalHostedZoneId
+        DNSName: !GetAtt ApiGatewayDomain.RegionalDomainName
+        EvaluateTargetHealth: false
+
+  ###############################################
+  # API Gateway Resources
+  ###############################################
 
   MyRestrictedTestMethodResource:
     Type: "AWS::ApiGateway::Resource"
@@ -84,28 +185,6 @@ Resources:
               method.response.header.Content-Type: "'application/json'"
             ResponseTemplates:
               "application/json": '{ "message": "Hello! You are not authenticated, but you are able to access this endpoint." }'
-
-  MyTestApiStage:
-    Type: "AWS::ApiGateway::Stage"
-    Properties:
-      RestApiId: !Ref ApiGateway
-      StageName: "dev"
-      Description: "dev stage"
-      MethodSettings:
-        - ResourcePath: /test
-          HttpMethod: GET
-          LoggingLevel: INFO
-          DataTraceEnabled: false
-          MetricsEnabled: false
-          ThrottlingBurstLimit: 555
-          ThrottlingRateLimit: 1000
-        - ResourcePath: /restrictedTest
-          HttpMethod: GET
-          LoggingLevel: INFO
-          DataTraceEnabled: false
-          MetricsEnabled: false
-          ThrottlingBurstLimit: 555
-          ThrottlingRateLimit: 1000
 
 Outputs:
   ApiGatewayRootResourceId:

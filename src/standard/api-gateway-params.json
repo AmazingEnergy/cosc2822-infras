@@ -1,14 +1,14 @@
 [
 	{
-		"ParameterKey": "ApiGatewayName",
-		"ParameterValue": "EasyShopGateway"
-	},
-	{
 		"ParameterKey": "CognitoStack",
 		"ParameterValue": "<CognitoStack>"
 	},
 	{
 		"ParameterKey": "Route53DNSStack",
 		"ParameterValue": "<Route53DNSStack>"
+	},
+	{
+		"ParameterKey": "ApiGatewayName",
+		"ParameterValue": "EasyShopAPI"
 	}
 ]
