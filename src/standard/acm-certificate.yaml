@@ -11,11 +11,11 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName:
-        Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
+        Fn::ImportValue: !Sub "${Route53DnsStack}-RootDomainName"
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName:
-            Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
+            Fn::ImportValue: !Sub "${Route53DnsStack}-RootDomainName"
           HostedZoneId:
             Fn::ImportValue: !Sub "${Route53DnsStack}-HostedZoneId"
       Tags:
@@ -26,3 +26,6 @@ Outputs:
   CertificateArn:
     Description: The ARN of the ACM Certificate
     Value: !Ref Certificate
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CertificateArn"

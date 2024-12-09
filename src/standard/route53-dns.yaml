@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: CloudFormation template to create a Route53.
 
 Parameters:
+  RootDomainName:
+    Type: String
+    Description: Root domain name
   DomainName:
     Type: String
     Description: Route53 domain name
@@ -34,6 +37,12 @@ Resources:
         DNSName: !Ref S3WebsiteEndpoint
 
 Outputs:
+  RootDomainName:
+    Value: !Ref RootDomainName
+    Description: Root domain name
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RootDomainName"
   HostedZoneId:
     Value: !GetAtt DNS.Id
     Description: HostedZone ID

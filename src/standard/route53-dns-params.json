@@ -1,5 +1,9 @@
 [
 	{
+		"ParameterKey": "RootDomainName",
+		"ParameterValue": "grp6asm3.com"
+	},
+	{
 		"ParameterKey": "DomainName",
 		"ParameterValue": "dev.grp6asm3.com"
 	},

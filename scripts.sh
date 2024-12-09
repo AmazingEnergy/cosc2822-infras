@@ -58,10 +58,18 @@ chmod +x ./cli/013-check-iam-caller.sh
 #######################################################
 
 if [[ "$ACTION" == "deploy-all-stacks" ]]; then
+	sed -i -e "s/<Route53DnsStack>/route53-dns-stack/g" ./src/standard/acm-certificate-params.json
+	sed -i -e "s/<S3StaticWebsiteStack>/static-website-stack/g" ./src/standard/cloud-front-params.json
+	sed -i -e "s/<ACMCertificateStack>/acm-certificate-stack/g" ./src/standard/cloud-front-params.json
+	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
+
 	chmod +x ./cli/002-run-cfn.sh
 	./cli/002-run-cfn.sh static-website-stack src/standard/s3-static-website.yaml src/standard/s3-static-website-params.json
 	./cli/002-run-cfn.sh route53-dns-stack src/standard/route53-dns.yaml src/standard/route53-dns-params.json
+	./cli/002-run-cfn.sh acm-certificate-stack src/standard/acm-certificate.yaml src/standard/acm-certificate-params.json
+	./cli/002-run-cfn.sh cloud-front-stack src/standard/cloud-front.yaml src/standard/cloud-front-params.json
 	./cli/002-run-cfn.sh cognito-stack src/standard/cognito.yaml src/standard/cognito-params.json
+	./cli/002-run-cfn.sh api-gateway-stack src/standard/api-gateway.yaml src/standard/api-gateway-params.json
 	exit 0
 fi
 
@@ -71,8 +79,11 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	chmod +x ./cli/009-clean-s3.sh
 	./cli/009-clean-s3.sh $S3_BUCKET_NAME
 	chmod +x ./cli/005-delete-stack.sh
+	./cli/005-delete-stack.sh cloud-front-stack
 	./cli/005-delete-stack.sh static-website-stack
+	./cli/005-delete-stack.sh acm-certificate-stack
 	./cli/005-delete-stack.sh route53-dns-stack
+	./cli/005-delete-stack.sh api-gateway-stack
 	./cli/005-delete-stack.sh cognito-stack
 	exit 0
 fi

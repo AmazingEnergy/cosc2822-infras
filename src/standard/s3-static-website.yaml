@@ -50,56 +50,6 @@ Resources:
             Principal: "*"
             Resource: !Sub "arn:${AWS::Partition}:s3:::${StaticWebsiteBucket}/*"
 
-  MyLoggingBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-
-  # Use CustomOriginConfig for S3 Bucket static website hosting
-  # https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_CustomOriginConfig.html
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-cloudfront.html#scenario-cloudfront-customorigin
-
-  MyCFDistribution:
-    Type: "AWS::CloudFront::Distribution"
-    Properties:
-      DistributionConfig:
-        Origins:
-          - DomainName: !GetAtt StaticWebsiteBucket.DomainName
-            Id: S3OriginId
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: http-only
-              OriginSSLProtocols:
-                - TLSv1.2
-                - TLSv1.1
-        Enabled: "true"
-        Comment: MY CloudFront distribution
-        DefaultRootObject: index.html
-        Logging:
-          IncludeCookies: "false"
-          Bucket: !GetAtt MyLoggingBucket.DomainName
-          Prefix: cloudfront
-        DefaultCacheBehavior:
-          Compress: "true"
-          AllowedMethods:
-            - DELETE
-            - GET
-            - HEAD
-            - OPTIONS
-            - PATCH
-            - POST
-            - PUT
-          TargetOriginId: S3OriginId
-          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
-          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
-          ViewerProtocolPolicy: redirect-to-https
-        PriceClass: PriceClass_200
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: "true"
-
 Outputs:
   S3BucketWebsiteURL:
     Value: !GetAtt StaticWebsiteBucket.WebsiteURL
@@ -135,15 +85,3 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-S3BucketName"
-  MyCFDistributionId:
-    Value: !GetAtt MyCFDistribution.Id
-    Description: Id of CloudFront distribution
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-MyCFDistributionId"
-  MyCFDistributionDomainName:
-    Value: !GetAtt MyCFDistribution.DomainName
-    Description: Domain name of CloudFront distribution
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-MyCFDistributionDomainName"

@@ -1,0 +1,10 @@
+[
+	{
+		"ParameterKey": "S3StaticWebsiteStack",
+		"ParameterValue": "<S3StaticWebsiteStack>"
+	},
+	{
+		"ParameterKey": "ACMCertificateStack",
+		"ParameterValue": "<ACMCertificateStack>"
+	}
+]
