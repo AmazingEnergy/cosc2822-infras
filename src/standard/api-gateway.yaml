@@ -32,29 +32,15 @@ Resources:
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
 
-  Deployment:
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId: !Ref ApiGateway
-    DependsOn:
-      - MyRestrictedTestMethodOnResource
-      - MyTestMethodOnResource
-
   DevStage:
     Type: "AWS::ApiGateway::Stage"
     Properties:
       RestApiId: !Ref ApiGateway
-      DeploymentId: !Ref Deployment
+      # DeploymentId: !Ref Deployment
       StageName: "dev"
       Description: "dev stage"
       MethodSettings:
-        - ResourcePath: /test
-          LoggingLevel: INFO
-          DataTraceEnabled: false
-          MetricsEnabled: false
-          ThrottlingBurstLimit: 100
-          ThrottlingRateLimit: 100
-        - ResourcePath: /restrictedTest
+        - ResourcePath: /\*/\*
           LoggingLevel: INFO
           DataTraceEnabled: false
           MetricsEnabled: false
@@ -64,6 +50,8 @@ Resources:
   ###############################################
   # Custom Domain
   ###############################################
+
+  # https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-regional-api-custom-domain-create.html
 
   ApiGatewayDomain:
     Type: "AWS::ApiGateway::DomainName"
@@ -136,18 +124,25 @@ Resources:
   # API Gateway Resources
   ###############################################
 
-  MyRestrictedTestMethodResource:
+  TestMethodResource:
     Type: "AWS::ApiGateway::Resource"
     Properties:
       ParentId: !GetAtt ApiGateway.RootResourceId
       RestApiId: !Ref ApiGateway
-      PathPart: "restrictedTest"
+      PathPart: "test"
 
-  MyRestrictedTestMethodOnResource:
+  RestrictedTestResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId: !Ref TestMethodResource
+      RestApiId: !Ref ApiGateway
+      PathPart: "restrictedGreating"
+
+  RestrictedTestResourceMethod:
     Type: "AWS::ApiGateway::Method"
     Properties:
       HttpMethod: GET
-      ResourceId: !Ref MyRestrictedTestMethodResource
+      ResourceId: !Ref RestrictedTestResource
       RestApiId: !Ref ApiGateway
       AuthorizationType: "COGNITO_USER_POOLS"
       AuthorizerId: !Ref ApiGatewayAuthorizer
@@ -165,18 +160,18 @@ Resources:
             ResponseTemplates:
               "application/json": '{ "message": "Hello! You were successfully authenticated." }'
 
-  MyTestMethodResource:
+  AnnonymousTestResource:
     Type: "AWS::ApiGateway::Resource"
     Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
+      ParentId: !Ref TestMethodResource
       RestApiId: !Ref ApiGateway
-      PathPart: "test"
+      PathPart: "annoynousGreating"
 
-  MyTestMethodOnResource:
+  AnnonymousTestResourceMethod:
     Type: "AWS::ApiGateway::Method"
     Properties:
       HttpMethod: GET
-      ResourceId: !Ref MyTestMethodResource
+      ResourceId: !Ref AnnonymousTestResource
       RestApiId: !Ref ApiGateway
       AuthorizationType: "None"
       RequestParameters: {}
@@ -193,6 +188,16 @@ Resources:
             ResponseTemplates:
               "application/json": '{ "message": "Hello! You are not authenticated, but you are able to access this endpoint." }'
 
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: "dev"
+      Description: first deployment, deploy test endpoints
+    DependsOn:
+      - RestrictedTestResourceMethod
+      - AnnonymousTestResourceMethod
+
 Outputs:
   ApiGatewayRootResourceId:
     Description: Root resource of API Gateway
@@ -201,8 +206,8 @@ Outputs:
     Description: REST API of API Gateway
     Value: !GetAtt ApiGateway.RestApiId
   TestEndpoint:
-    Description: RESTful /test endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test"
+    Description: RESTful annoymous test endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/annoynousGreating"
   RestrictedTestEndpoint:
-    Description: RESTful /restrictedTest endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/restrictedTest"
+    Description: RESTful restricted test endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/restrictedGreating"
