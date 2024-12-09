@@ -11,13 +11,15 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName:
-        Fn::ImportValue: !Sub "${Route53DnsStack}-RootDomainName"
+        Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName:
-            Fn::ImportValue: !Sub "${Route53DnsStack}-RootDomainName"
+            Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
           HostedZoneId:
             Fn::ImportValue: !Sub "${Route53DnsStack}-HostedZoneId"
+          ValidationDomain:
+            Fn::ImportValue: !Sub "${Route53DnsStack}-RootDomainName"
       Tags:
         - Key: "Purpose"
           Value: "Asm3"
