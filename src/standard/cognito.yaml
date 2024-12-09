@@ -56,6 +56,12 @@ Resources:
         - !Sub "https://${ClientAppDomainName}/logout"
 
 Outputs:
+  CognitoUserPoolArn:
+    Description: ID of the Cognito User Pool
+    Value: !GetAtt CognitoUserPool.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CognitoUserPoolArn"
   CognitoUserPoolId:
     Description: ID of the Cognito User Pool
     Value: !GetAtt CognitoUserPool.UserPoolId
