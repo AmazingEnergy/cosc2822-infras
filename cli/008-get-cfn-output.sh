@@ -5,6 +5,7 @@
 
 CFN_STACK_NAME=$1
 CFN_OUTPUT_KEY=$2
+CFN_STACK_REGION=${3:-"ap-southeast-1"}
 
 # AWS CLI Filter output
 # https://docs.aws.amazon.com/cli/v1/userguide/cli-usage-filter.html
@@ -14,6 +15,7 @@ CFN_OUTPUT_KEY=$2
 CFN_OUTPUT_VALUE=$(aws cloudformation describe-stacks \
 	--stack-name $CFN_STACK_NAME \
 	--query "Stacks[0].Outputs[?OutputKey=='$CFN_OUTPUT_KEY'] | [0].OutputValue" \
+	--region $CFN_STACK_REGION \
 	--output text)
 
 if [[ -n "$CFN_OUTPUT_VALUE" && ! "$CFN_OUTPUT_VALUE" == "None" ]]; then

@@ -49,26 +49,23 @@ jobs:
     needs: [setup-env]
     steps:
       - uses: actions/checkout@v4
-      - name: Assume Role
+      - name: Assume Role (Before)
         id: assume-role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_role_arn_key_name] }}
           aws-region: ${{ needs.setup-env.outputs.aws_region }}
-      - name: Run CloudFormation
+      - name: Run CloudFormation (Before)
         id: run-cloud-formation
         env:
+          region: ${{ needs.setup-env.outputs.aws_region }}
           environment: ${{ needs.setup-env.outputs.current_environment }}
-          ssh_key: ${{ secrets[needs.setup-env.outputs.ssh_key_name] }}
-          stripe_secret_key: ${{ secrets[needs.setup-env.outputs.stripe_secret_key_name] }}
-          stripe_publishable_key: ${{ secrets[needs.setup-env.outputs.stripe_publishable_key_name] }}
-          stripe_webhook_secret: ${{ secrets[needs.setup-env.outputs.stripe_webhook_secret_name] }}
         shell: bash
         run: |
           ls -l
           aws s3 ls
           chmod +x ./scripts.sh
-          ./scripts.sh --action deploy-all-stacks
+          ./scripts.sh --action deploy-before-master --region $region
           ROUTE53_NAME_SERVERS=$(./cli/008-get-cfn-output.sh route53-dns-stack NameServers)
           echo "route53_name_servers=$ROUTE53_NAME_SERVERS" >> "$GITHUB_OUTPUT"
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
@@ -82,6 +79,7 @@ jobs:
       - name: Run CloudFormation (Master)
         id: run-cloud-formation-master
         env:
+          region: ${{ needs.setup-env.outputs.aws_region }}
           environment: ${{ needs.setup-env.outputs.current_environment }}
           route_name_servers: ${{ steps.run-cloud-formation.outputs.route53_name_servers  }}
         shell: bash
@@ -89,6 +87,29 @@ jobs:
           ls -l
           aws s3 ls
           chmod +x ./scripts.sh
-          ./scripts.sh --action deploy-all-master-stacks --route53-name-servers $route_name_servers
+          ./scripts.sh --action deploy-all-master-stacks --route53-name-servers $route_name_servers --region $region
+          aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
+          aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE
+      - name: Assume Role (After)
+        id: assume-role-after
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets[needs.setup-env.outputs.aws_role_arn_key_name] }}
+          aws-region: ${{ needs.setup-env.outputs.aws_region }}
+      - name: Run CloudFormation (After)
+        id: run-cloud-formation-after
+        env:
+          region: ${{ needs.setup-env.outputs.aws_region }}
+          environment: ${{ needs.setup-env.outputs.current_environment }}
+          ssh_key: ${{ secrets[needs.setup-env.outputs.ssh_key_name] }}
+          stripe_secret_key: ${{ secrets[needs.setup-env.outputs.stripe_secret_key_name] }}
+          stripe_publishable_key: ${{ secrets[needs.setup-env.outputs.stripe_publishable_key_name] }}
+          stripe_webhook_secret: ${{ secrets[needs.setup-env.outputs.stripe_webhook_secret_name] }}
+        shell: bash
+        run: |
+          ls -l
+          aws s3 ls
+          chmod +x ./scripts.sh
+          ./scripts.sh --action deploy-after-master --region $region
           aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
           aws cloudformation list-stacks --stack-status-filter UPDATE_COMPLETE

@@ -6,7 +6,8 @@
 CFN_STACK_NAME=$1
 CFN_TEMPLATE_PATH=$2
 CFN_STACK_PARAMETERS_PATH=$3
-WAIT=${4:-"true"}
+CFN_STACK_REGION=${4:-"ap-southeast-1"}
+WAIT=${5:-"true"}
 
 mkdir ./_output
 mkdir ./_output/run-cfn
@@ -29,6 +30,7 @@ sed -i -e "s/<MY_IP>/$ESCAPED_MY_IP/g" ./$CFN_STACK_PARAMETERS_PATH
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/validate-template.html#
 aws cloudformation validate-template \
 	--template-body file://$CFN_TEMPLATE_PATH \
+	--region $CFN_STACK_REGION \
 	--output json \
 	> $OUTPUT_DIR/template-validation-result.json
 
@@ -40,6 +42,7 @@ CFN_ESTIMATE_TEMPLATE_COST_URL=$(aws cloudformation estimate-template-cost \
 	--template-body file://$CFN_TEMPLATE_PATH \
 	--parameters file://$CFN_STACK_PARAMETERS_PATH \
 	--query "Url" \
+	--region $CFN_STACK_REGION \
 	--output text)
 
 if [[ -n "$CFN_ESTIMATE_TEMPLATE_COST_URL" ]]; then
@@ -62,6 +65,7 @@ echo ""
 CFN_STACK_STATUS=$(aws cloudformation describe-stacks \
 	--stack-name $CFN_STACK_NAME \
 	--query "Stacks[0].StackStatus" \
+	--region $CFN_STACK_REGION \
 	--output text)
 
 echo "Found CloudFormation Stack:$CFN_STACK_NAME with Status:$CFN_STACK_STATUS"
@@ -77,6 +81,7 @@ if [[ "$CFN_STACK_STATUS" == "CREATE_COMPLETE" || "$CFN_STACK_STATUS" == "UPDATE
 	CFN_STACK_DRIFT_ID=$(aws cloudformation detect-stack-drift \
     --stack-name $CFN_STACK_NAME \
 		--query "StackDriftDetectionId" \
+		--region $CFN_STACK_REGION \
 		--output text)
 
 	if [[ -n "$CFN_STACK_DRIFT_ID" ]]; then
@@ -85,6 +90,7 @@ if [[ "$CFN_STACK_STATUS" == "CREATE_COMPLETE" || "$CFN_STACK_STATUS" == "UPDATE
 		# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/describe-stack-resource-drifts.html
 		aws cloudformation describe-stack-resource-drifts \
 			--stack-name $CFN_STACK_NAME \
+			--region $CFN_STACK_REGION \
 			--output json \
 			> $OUTPUT_DIR/stack-resource-drifts.json
 
@@ -100,12 +106,14 @@ elif [[ "$CFN_STACK_STATUS" == "CREATE_FAILED" || "$CFN_STACK_STATUS" == "DELETE
 
 	# https://docs.aws.amazon.com/cli/latest/reference/cloudformation/delete-stack.html
 	aws cloudformation delete-stack \
-    --stack-name $CFN_STACK_NAME
+    --stack-name $CFN_STACK_NAME \
+		--region $CFN_STACK_REGION
 	
 	echo "Waiting for CloudFormation Stack $CFN_STACK_NAME to be deleted..."
 	echo ""
 	aws cloudformation wait stack-delete-complete \
-		--stack-name $CFN_STACK_NAME
+		--stack-name $CFN_STACK_NAME \
+		--region $CFN_STACK_REGION
 fi
 
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
@@ -122,6 +130,7 @@ aws cloudformation create-change-set \
 	--include-nested-stacks \
 	--on-stack-failure ROLLBACK \
 	--tags "Key=Purpose,Value=Test" \
+	--region $CFN_STACK_REGION \
 	--output json \
 	> $OUTPUT_DIR/created-change-set.json
 
@@ -137,11 +146,13 @@ echo ""
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/wait/
 aws cloudformation wait change-set-create-complete \
 	--stack-name $CFN_STACK_ID \
-	--change-set-name $CFN_CHANGE_SET_ID
+	--change-set-name $CFN_CHANGE_SET_ID \
+	--region $CFN_STACK_REGION
 
 CFN_CHANGE_SET_STATUS=$(aws cloudformation describe-change-set \
   --change-set-name $CFN_CHANGE_SET_ID \
 	--query "Status" \
+	--region $CFN_STACK_REGION \
 	--output text)
 
 if [[ "$CFN_CHANGE_SET_STATUS" == "FAILED" ]]; then
@@ -152,24 +163,28 @@ fi
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/execute-change-set.html
 aws cloudformation execute-change-set \
 	--stack-name $CFN_STACK_ID \
-	--change-set-name $CFN_CHANGE_SET_ID
+	--change-set-name $CFN_CHANGE_SET_ID \
+	--region $CFN_STACK_REGION
 
 if [[ "$WAIT" == "true"  ]]; then
 	if [[ "$CFN_CHANGE_SET_TYPE" == "CREATE" ]]; then
 		echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be created..."
 		echo ""
 		aws cloudformation wait stack-create-complete \
-			--stack-name $CFN_STACK_ID
+			--stack-name $CFN_STACK_ID \
+			--region $CFN_STACK_REGION
 	else
 		echo "Waiting for CloudFormation Stack $CFN_STACK_ID to be updated..."
 		echo ""
 		aws cloudformation wait stack-update-complete \
-			--stack-name $CFN_STACK_ID
+			--stack-name $CFN_STACK_ID \
+			--region $CFN_STACK_REGION
 	fi
 fi
 
 aws cloudformation describe-stacks \
 	--stack-name $CFN_STACK_NAME \
+	--region $CFN_STACK_REGION \
 	--output json \
 	> $OUTPUT_DIR/created-stack.json
 
@@ -179,6 +194,7 @@ echo ""
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/list-stacks.html#
 aws cloudformation list-stacks \
 	--stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE ROLLBACK_COMPLETE IMPORT_COMPLETE \
+	--region $CFN_STACK_REGION \
 	--output json \
 	> $OUTPUT_DIR/active-stacks.json
 
@@ -187,6 +203,7 @@ echo ""
 
 aws cloudformation list-stacks \
 	--stack-status-filter DELETE_COMPLETE \
+	--region $CFN_STACK_REGION \
 	--output json \
 	> $OUTPUT_DIR/archived-stacks.json
 

@@ -33,8 +33,9 @@ chmod +x ./scripts.sh
 
 # deploy all stacks to working account and master account
 
-./scripts.sh --action deploy-all-stacks
+./scripts.sh --action deploy-before-master
 ./scripts.sh --action deploy-all-master-stacks
+./scripts.sh --action deploy-after-master
 
 # destroy all stacks from working account and master account
 
