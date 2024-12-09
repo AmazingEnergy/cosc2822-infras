@@ -11,11 +11,11 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName:
-        Fn::ImportValue: !Sub "${Route53DnsStack}-WildcardDomainName"
+        Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName:
-            Fn::ImportValue: !Sub "${Route53DnsStack}-WildcardDomainName"
+            Fn::ImportValue: !Sub "${Route53DnsStack}-DomainName"
           HostedZoneId:
             Fn::ImportValue: !Sub "${Route53DnsStack}-HostedZoneId"
       Tags:
