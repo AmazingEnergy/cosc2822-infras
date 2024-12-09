@@ -60,7 +60,6 @@ Resources:
         Origins:
           - DomainName: !GetAtt StaticWebsiteBucket.DomainName
             Id: S3OriginId
-            OriginPath: /
         Enabled: "true"
         Comment: MY CloudFront distribution
         DefaultRootObject: index.html
@@ -71,6 +70,7 @@ Resources:
         Aliases:
           - !Ref StaticWebsiteBucketName
         DefaultCacheBehavior:
+          Compress: "true"
           AllowedMethods:
             - DELETE
             - GET
@@ -80,10 +80,8 @@ Resources:
             - POST
             - PUT
           TargetOriginId: S3OriginId
-          ForwardedValues:
-            QueryString: "false"
-            Cookies:
-              Forward: none
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
+          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_200
         ViewerCertificate:
