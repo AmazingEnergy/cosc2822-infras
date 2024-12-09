@@ -32,6 +32,20 @@ Resources:
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
 
+  # https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-using-cloudformation
+
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - "-"
+          - - !Ref ApiGateway
+            - access-logs
+      RetentionInDays: 1
+
   ###############################################
   # Custom Domain
   ###############################################
@@ -189,6 +203,9 @@ Resources:
           MetricsEnabled: false
           ThrottlingBurstLimit: 100
           ThrottlingRateLimit: 100
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
+        Format: $context.extendedRequestId $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId
 
   MyApiMapping:
     Type: "AWS::ApiGatewayV2::ApiMapping"
