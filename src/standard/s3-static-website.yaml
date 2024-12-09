@@ -50,6 +50,49 @@ Resources:
             Principal: "*"
             Resource: !Sub "arn:${AWS::Partition}:s3:::${StaticWebsiteBucket}/*"
 
+  MyLoggingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-logging-bucket
+
+  MyCFDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt StaticWebsiteBucket.DomainName
+            Id: S3OriginId
+            OriginPath: /
+            S3OriginConfig:
+              OriginAccessIdentity: origin-access-identity/cloudfront/E127EXAMPLE51Z
+        Enabled: "true"
+        Comment: MY CloudFront distribution
+        DefaultRootObject: index.html
+        Logging:
+          IncludeCookies: "false"
+          Bucket: !GetAtt MyLoggingBucket.DomainName
+          Prefix: cloudfront
+        Aliases:
+          - !Ref StaticWebsiteBucketName
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+          TargetOriginId: S3OriginId
+          ForwardedValues:
+            QueryString: "false"
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_200
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: "true"
+
 Outputs:
   S3BucketWebsiteURL:
     Value: !GetAtt StaticWebsiteBucket.WebsiteURL
