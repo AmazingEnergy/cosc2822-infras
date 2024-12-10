@@ -69,14 +69,14 @@ Resources:
             Fn::FindInMap: [Tables, Product, FirstGsiSortKey]
           AttributeType:
             Fn::FindInMap: [Tables, Product, FirstGsiSortKeyType]
-        - AttributeName:
-            Fn::FindInMap: [Tables, Product, SecondGsiPartitionKey]
-          AttributeType:
-            Fn::FindInMap: [Tables, Product, SecondGsiPartitionKeyType]
-        - AttributeName:
-            Fn::FindInMap: [Tables, Product, SecondGsiSortKey]
-          AttributeType:
-            Fn::FindInMap: [Tables, Product, SecondGsiSortKeyType]
+        # - AttributeName:
+        #     Fn::FindInMap: [Tables, Product, SecondGsiPartitionKey]
+        #   AttributeType:
+        #     Fn::FindInMap: [Tables, Product, SecondGsiPartitionKeyType]
+        # - AttributeName:
+        #     Fn::FindInMap: [Tables, Product, SecondGsiSortKey]
+        #   AttributeType:
+        #     Fn::FindInMap: [Tables, Product, SecondGsiSortKeyType]
       KeySchema:
         - AttributeName:
             Fn::FindInMap: [Tables, Product, PartitionKey]
