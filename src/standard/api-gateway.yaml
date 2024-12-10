@@ -85,7 +85,7 @@ Resources:
     Properties:
       DomainName:
         Fn::ImportValue: !Sub "${Route53DNSStack}-ServiceDomainName"
-      CertificateArn: !Ref RegionalCertificate
+      RegionalCertificateArn: !Ref RegionalCertificate
       EndpointConfiguration:
         Types:
           - REGIONAL
