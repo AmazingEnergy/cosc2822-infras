@@ -61,7 +61,7 @@ Resources:
         Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
       AuthorizationType: "COGNITO_USER_POOLS"
       AuthorizerId:
-        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayIdAuthorizerId"
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayRootResourceId"
       RequestParameters: {}
       MethodResponses:
         - StatusCode: "200"
