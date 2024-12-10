@@ -22,6 +22,7 @@ Resources:
 
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
+    DependsOn: ApiGatewayAccount
     Properties:
       Name: !Ref ApiGatewayName
 
@@ -68,7 +69,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref AmazonAPIGatewayPushToCloudWatchLogs
 
-  Account:
+  ApiGatewayAccount:
     Type: "AWS::ApiGateway::Account"
     Properties:
       CloudWatchRoleArn: !GetAtt ApiGatewayAccessCloudWatchRole.Arn
