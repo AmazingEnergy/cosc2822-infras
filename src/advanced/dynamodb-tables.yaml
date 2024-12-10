@@ -3,11 +3,11 @@ Description: CloudFormation template to create DynamoDB tables
 
 Parameters:
   MaxReadCapacityUnits:
-    Type: String
+    Type: Number
     Default: 10
     Description: Number of read capacity units
   MaxWriteCapacityUnits:
-    Type: String
+    Type: Number
     Default: 10
     Description: Number of write capacity units
 
