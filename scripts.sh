@@ -81,22 +81,31 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	sed -i -e "s/<CertificateArn>/$ESCAPED_CERTIFICATE_ARN/g" ./src/standard/cloud-front-params.json
 	sed -i -e "s/<Route53DNSStack>/route53-dns-stack/g" ./src/standard/api-gateway-params.json
 	sed -i -e "s/<CognitoStack>/cognito-stack/g" ./src/standard/api-gateway-params.json
+	sed -i -e "s/<Route53DNSStack>/route53-dns-stack/g" ./src/standard/apigw-test-endpoint.json
+	sed -i -e "s/<ApiGatewayStack>/api-gateway-stack/g" ./src/standard/apigw-test-endpoint.json
 
 	./cli/002-run-cfn.sh cloud-front-stack src/standard/cloud-front.yaml src/standard/cloud-front-params.json $REGION
 	./cli/002-run-cfn.sh cognito-stack src/standard/cognito.yaml src/standard/cognito-params.json $REGION
 	./cli/002-run-cfn.sh api-gateway-stack src/standard/api-gateway.yaml src/standard/api-gateway-params.json $REGION
+	./cli/002-run-cfn.sh apigw-test-api-stack src/standard/apigw-test-endpoint.yaml src/standard/apigw-test-endpoint.json $REGION
 	exit 0
 fi
 
 if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	chmod +x ./cli/008-get-cfn-output.sh
 	chmod +x ./cli/009-clean-s3.sh
+	chmod +x ./cli/005-delete-stack.sh
+
 	S3_BUCKET_NAME=$(./cli/008-get-cfn-output.sh static-website-stack S3BucketName $REGION)
 	./cli/009-clean-s3.sh $S3_BUCKET_NAME $REGION
 	S3_BUCKET_NAME=$(./cli/008-get-cfn-output.sh cloud-front-stack S3BucketName $REGION)
 	./cli/009-clean-s3.sh $S3_BUCKET_NAME $REGION
 
-	chmod +x ./cli/005-delete-stack.sh
+	# delete applications
+	./cli/005-delete-stack.sh apigw-test-api-stack $REGION
+	# delete advanced stacks
+	# TODO: add here
+	# delete standard stacks
 	./cli/005-delete-stack.sh cloud-front-stack $REGION
 	./cli/005-delete-stack.sh static-website-stack $REGION
 	./cli/005-delete-stack.sh acm-certificate-stack us-east-1

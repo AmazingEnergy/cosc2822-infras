@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create /test endpoints
+
+Parameters:
+  ApiGatewayStack:
+    Type: String
+    Description: stack name
+  Route53DNSStack:
+    Type: String
+    Description: stack name
+
+Mappings:
+  Resources:
+    Test:
+      ResourcePath: "test"
+      AnonymousTestResourcePath: "annoynousGreating"
+      RestrictedTestResourcePath: "restrictedGreating"
+      AnonymousTestEndpoint:
+        - Fn::Sub:
+            - "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/annoynousGreating"
+            - ApiGateway:
+                Fn::ImportValue:
+                  Fn::Sub: ${ApiGatewayStack}-ApiGatewayId"
+      RestrictedTestEndpoint:
+        - Fn::Sub:
+            - "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/restrictedGreating"
+            - ApiGateway:
+                Fn::ImportValue:
+                  Fn::Sub: ${ApiGatewayStack}-ApiGatewayId"
+
+Resources:
+  ###############################################
+  # API Gateway Resources
+  ###############################################
+
+  TestMethodResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayIdRootResourceId"
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      PathPart:
+        Fn::FindInMap: [Resources, Test, ResourcePath]
+
+  RestrictedTestResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId: !Ref TestMethodResource
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      PathPart:
+        Fn::FindInMap: [Resources, Test, RestrictedTestResourcePath]
+
+  RestrictedTestResourceMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref RestrictedTestResource
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      AuthorizationType: "COGNITO_USER_POOLS"
+      AuthorizerId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayIdAuthorizerId"
+      RequestParameters: {}
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Content-Type: true
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Content-Type: "'application/json'"
+            ResponseTemplates:
+              "application/json": '{ "message": "Hello! You were successfully authenticated." }'
+
+  AnnonymousTestResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId: !Ref TestMethodResource
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      PathPart:
+        Fn::FindInMap: [Resources, Test, AnonymousTestResourcePath]
+
+  AnnonymousTestResourceMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref AnnonymousTestResource
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      AuthorizationType: "None"
+      RequestParameters: {}
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Content-Type: true
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Content-Type: "'application/json'"
+            ResponseTemplates:
+              "application/json": '{ "message": "Hello! You are not authenticated, but you are able to access this endpoint." }'
+
+  ###############################################
+  # API Gateway Deployment
+  ###############################################
+
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      Description: first deployment, deploy test endpoints
+    DependsOn:
+      - RestrictedTestResourceMethod
+      - AnnonymousTestResourceMethod
+
+  DevStage:
+    Type: "AWS::ApiGateway::Stage"
+    Properties:
+      RestApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      DeploymentId: !Ref Deployment
+      StageName: "dev"
+      Description: "dev stage"
+      MethodSettings:
+        - HttpMethod: "*"
+          ResourcePath: "/*"
+          LoggingLevel: INFO
+          DataTraceEnabled: false
+          MetricsEnabled: false
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 100
+      AccessLogSetting:
+        DestinationArn:
+          Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayIdLogGroupArn"
+        Format: $context.extendedRequestId $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId
+
+  MyApiMapping:
+    Type: "AWS::ApiGatewayV2::ApiMapping"
+    Properties:
+      DomainName:
+        Fn::ImportValue: !Sub "${Route53DNSStack}-ServiceDomainName"
+      ApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
+      Stage: !Ref DevStage
+
+Outputs:
+  TestEndpoint:
+    Description: RESTful annoymous test endpoint
+    Value:
+      Fn::Select:
+        - 0
+        - Fn::FindInMap: [Resources, Test, AnonymousTestEndpoint]
+  RestrictedTestEndpoint:
+    Description: RESTful restricted test endpoint
+    Value:
+      Fn::Select:
+        - 0
+        - Fn::FindInMap: [Resources, Test, RestrictedTestEndpoint]

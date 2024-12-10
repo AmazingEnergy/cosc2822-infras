@@ -40,7 +40,7 @@ Resources:
   # API Gateway Logging
   ###############################################
 
-  # https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-using-cloudformation
+  # https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html
 
   ApiGatewayLogGroup:
     Type: AWS::Logs::LogGroup
@@ -84,11 +84,7 @@ Resources:
     Type: "AWS::ApiGateway::DomainName"
     Properties:
       DomainName:
-        Fn::Sub:
-          - "service.${DomainName}"
-          - DomainName:
-              Fn::ImportValue:
-                Fn::Sub: "${Route53DNSStack}-DomainName"
+        Fn::ImportValue: !Sub "${Route53DNSStack}-ServiceDomainName"
       CertificateArn: !Ref RegionalCertificate
       EndpointConfiguration:
         Types:
@@ -99,176 +95,52 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName:
-        Fn::Sub:
-          - "service.${DomainName}"
-          - DomainName:
-              Fn::ImportValue:
-                Fn::Sub: "${Route53DNSStack}-DomainName"
+        Fn::ImportValue: !Sub "${Route53DNSStack}-ServiceDomainName"
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName:
-            Fn::Sub:
-              - "service.${DomainName}"
-              - DomainName:
-                  Fn::ImportValue:
-                    Fn::Sub: "${Route53DNSStack}-DomainName"
+            Fn::ImportValue: !Sub "${Route53DNSStack}-ServiceDomainName"
           HostedZoneId:
             Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
       Tags:
         - Key: "Purpose"
           Value: "Asm3"
 
-  MyAliasRecord:
+  ServiceAliasRecord:
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId:
         Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
       Name:
-        Fn::Sub:
-          - "service.${DomainName}"
-          - DomainName:
-              Fn::ImportValue:
-                Fn::Sub: "${Route53DNSStack}-DomainName"
+        Fn::ImportValue: !Sub "${Route53DNSStack}-ServiceDomainName"
       Type: "A"
       AliasTarget:
         HostedZoneId: !GetAtt ApiGatewayDomain.RegionalHostedZoneId
         DNSName: !GetAtt ApiGatewayDomain.RegionalDomainName
         EvaluateTargetHealth: false
 
-  ###############################################
-  # API Gateway Resources
-  ###############################################
-
-  TestMethodResource:
-    Type: "AWS::ApiGateway::Resource"
-    Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      RestApiId: !Ref ApiGateway
-      PathPart: "test"
-
-  RestrictedTestResource:
-    Type: "AWS::ApiGateway::Resource"
-    Properties:
-      ParentId: !Ref TestMethodResource
-      RestApiId: !Ref ApiGateway
-      PathPart: "restrictedGreating"
-
-  RestrictedTestResourceMethod:
-    Type: "AWS::ApiGateway::Method"
-    Properties:
-      HttpMethod: GET
-      ResourceId: !Ref RestrictedTestResource
-      RestApiId: !Ref ApiGateway
-      AuthorizationType: "COGNITO_USER_POOLS"
-      AuthorizerId: !Ref ApiGatewayAuthorizer
-      RequestParameters: {}
-      MethodResponses:
-        - StatusCode: "200"
-          ResponseParameters:
-            method.response.header.Content-Type: true
-      Integration:
-        Type: "MOCK"
-        IntegrationResponses:
-          - StatusCode: "200"
-            ResponseParameters:
-              method.response.header.Content-Type: "'application/json'"
-            ResponseTemplates:
-              "application/json": '{ "message": "Hello! You were successfully authenticated." }'
-
-  AnnonymousTestResource:
-    Type: "AWS::ApiGateway::Resource"
-    Properties:
-      ParentId: !Ref TestMethodResource
-      RestApiId: !Ref ApiGateway
-      PathPart: "annoynousGreating"
-
-  AnnonymousTestResourceMethod:
-    Type: "AWS::ApiGateway::Method"
-    Properties:
-      HttpMethod: GET
-      ResourceId: !Ref AnnonymousTestResource
-      RestApiId: !Ref ApiGateway
-      AuthorizationType: "None"
-      RequestParameters: {}
-      MethodResponses:
-        - StatusCode: "200"
-          ResponseParameters:
-            method.response.header.Content-Type: true
-      Integration:
-        Type: "MOCK"
-        IntegrationResponses:
-          - StatusCode: "200"
-            ResponseParameters:
-              method.response.header.Content-Type: "'application/json'"
-            ResponseTemplates:
-              "application/json": '{ "message": "Hello! You are not authenticated, but you are able to access this endpoint." }'
-
-  ###############################################
-  # API Gateway Deployment
-  ###############################################
-
-  Deployment:
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId: !Ref ApiGateway
-      Description: first deployment, deploy test endpoints
-    DependsOn:
-      - RestrictedTestResourceMethod
-      - AnnonymousTestResourceMethod
-
-  DevStage:
-    Type: "AWS::ApiGateway::Stage"
-    Properties:
-      RestApiId: !Ref ApiGateway
-      DeploymentId: !Ref Deployment
-      StageName: "dev"
-      Description: "dev stage"
-      MethodSettings:
-        - HttpMethod: "*"
-          ResourcePath: "/*"
-          LoggingLevel: INFO
-          DataTraceEnabled: false
-          MetricsEnabled: false
-          ThrottlingBurstLimit: 100
-          ThrottlingRateLimit: 100
-      AccessLogSetting:
-        DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
-        Format: $context.extendedRequestId $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId
-
-  MyApiMapping:
-    Type: "AWS::ApiGatewayV2::ApiMapping"
-    Properties:
-      DomainName:
-        Fn::Sub:
-          - "service.${DomainName}"
-          - DomainName:
-              Fn::ImportValue:
-                Fn::Sub: "${Route53DNSStack}-DomainName"
-      ApiId: !Ref ApiGateway
-      Stage: !Ref DevStage
-
 Outputs:
-  ApiGateway:
-    Description: Root resource of API Gateway
-    Value: !Ref ApiGateway
+  ApiGatewayId:
+    Description: API Gateway ID
+    Value: !GetAtt ApiGateway.RestApiId
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-ApiGateway"
+        Fn::Sub: "${AWS::StackName}-ApiGatewayId"
   ApiGatewayRootResourceId:
     Description: Root resource of API Gateway
     Value: !GetAtt ApiGateway.RootResourceId
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-ApiGatewayRootResourceId"
-  ApiGatewayRestApiId:
-    Description: REST API of API Gateway
-    Value: !GetAtt ApiGateway.RestApiId
+  ApiGatewayAuthorizerId:
+    Description: API Gateway Authorizer ID
+    Value: !GetAtt ApiGatewayAuthorizer.AuthorizerId
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-ApiGatewayRestApiId"
-  TestEndpoint:
-    Description: RESTful annoymous test endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/annoynousGreating"
-  RestrictedTestEndpoint:
-    Description: RESTful restricted test endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/test/restrictedGreating"
+        Fn::Sub: "${AWS::StackName}-ApiGatewayAuthorizerId"
+  ApiGatewayLogGroupArn:
+    Description: API Gateway LogGroup ARN
+    Value: !GetAtt ApiGatewayLogGroup.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-ApiGatewayLogGroupArn"

@@ -1,0 +1,10 @@
+[
+	{
+		"ParameterKey": "Route53DNSStack",
+		"ParameterValue": "<Route53DNSStack>"
+	},
+	{
+		"ParameterKey": "ApiGatewayStack",
+		"ParameterValue": "<ApiGatewayStack>"
+	}
+]

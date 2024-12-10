@@ -79,11 +79,7 @@ Resources:
       HostedZoneId:
         Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
       Name:
-        Fn::Sub:
-          - "app.${DomainName}"
-          - DomainName:
-              Fn::ImportValue:
-                Fn::Sub: "${Route53DNSStack}-DomainName"
+        Fn::ImportValue: !Sub "${Route53DNSStack}-AppDomainName"
       Type: A
       AliasTarget:
         HostedZoneId: !Ref CloudFrontHostedZone
