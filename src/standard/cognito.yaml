@@ -7,6 +7,10 @@ Parameters:
     Description: User Pool client app domain name
 
 Resources:
+  ###############################################
+  # Cognito UserPool
+  ###############################################
+
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     DeletionPolicy: Delete
@@ -54,6 +58,56 @@ Resources:
         - !Sub "https://${ClientAppDomainName}/callback"
       LogoutURLs:
         - !Sub "https://${ClientAppDomainName}/logout"
+
+  ###############################################
+  # Cognito Groups & Users
+  ###############################################
+
+  CognitoCustomerGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: "EasyShop customer group"
+      GroupName: "customer"
+      UserPoolId: !Ref CognitoUserPool
+
+  CognitoAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: "EasyShop admin group"
+      GroupName: "admin"
+      UserPoolId: !Ref CognitoUserPool
+
+  CognitoAdmin1User:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      Username: admin01.grp6asm3@yopmail.com
+      UserAttributes:
+        - Name: email
+          Value: admin01.grp6asm3@yopmail.com
+
+  CognitoAdmin2User:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      Username: admin02.grp6asm3@yopmail.com
+      UserAttributes:
+        - Name: email
+          Value: admin02.grp6asm3@yopmail.com
+
+  AddAdmin1UserToGroup:
+    Type: AWS::Cognito::UserPoolUserToGroupAttachment
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      GroupName: !Ref CognitoAdminGroup
+      Username: !Ref CognitoAdmin1User
+
+  AddAdmin2UserToGroup:
+    Type: AWS::Cognito::UserPoolUserToGroupAttachment
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      GroupName: !Ref CognitoAdminGroup
+      Username: !Ref CognitoAdmin2User
 
 Outputs:
   CognitoUserPoolArn:
