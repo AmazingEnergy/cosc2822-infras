@@ -37,7 +37,7 @@ Resources:
     Type: "AWS::ApiGateway::Resource"
     Properties:
       ParentId:
-        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayIdRootResourceId"
+        Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayRootResourceId"
       RestApiId:
         Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
       PathPart:
