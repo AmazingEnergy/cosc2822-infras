@@ -91,7 +91,7 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	./cli/002-run-cfn.sh api-gateway-stack src/standard/api-gateway.yaml src/standard/api-gateway-params.json $REGION
 	./cli/002-run-cfn.sh apigw-test-api-stack src/standard/apigw-test-endpoint.yaml src/standard/apigw-test-endpoint.json $REGION
 
-	./cli/002-run-cfn.sh dynamodb-tables-stack src/standard/dynamodb-tables.yaml src/standard/dynamodb-tables-params.json $REGION
+	./cli/002-run-cfn.sh dynamodb-tables-stack src/advanced/dynamodb-tables.yaml src/advanced/dynamodb-tables-params.json $REGION
 	exit 0
 fi
 
