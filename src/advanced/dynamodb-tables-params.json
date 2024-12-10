@@ -1,0 +1,10 @@
+[
+	{
+		"ParameterKey": "MaxReadCapacityUnits",
+		"ParameterValue": 10
+	},
+	{
+		"ParameterKey": "MaxWriteCapacityUnits",
+		"ParameterValue": 10
+	}
+]

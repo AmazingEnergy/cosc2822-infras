@@ -29,6 +29,8 @@ while [[ "$#" -gt 0 ]]; do
     --oidc-audience) IAM_OIDC_AUDIENCE="$2"; shift ;;
     --oidc-thumbprint) IAM_OIDC_THUMBPRINT="$2"; shift ;;
     --github-org) GITHUB_ORG="$2"; shift ;;
+    --username) USERNAME="$2"; shift ;;
+    --password) PASSWORD="$2"; shift ;;
     *) POSITIONAL+=("$1") ;; # Collect positional arguments
   esac
   shift
@@ -207,6 +209,15 @@ fi
 if [[ "$ACTION" == "clean-hosted-zone" ]]; then
 	chmod +x ./cli/015-clean-hosted-zone.sh
 	./cli/015-clean-hosted-zone.sh $ROUTE53_HOSTED_ZONE
+	exit 0
+fi
+
+if [[ "$ACTION" == "get-access-token" ]]; then
+	USER_POOL_CLIENT_ID=$(./cli/008-get-cfn-output.sh cognito-stack CognitoUserPoolClientId $REGION)
+	USER_POOL_CLIENT_SECRET=$(./cli/008-get-cfn-output.sh cognito-stack CognitoUserPoolClientSecret $REGION)
+
+	chmod +x ./cli/016-get-cognito-access-token.sh
+	./cli/016-get-cognito-access-token.sh $USER_POOL_CLIENT_ID $USER_POOL_CLIENT_SECRET $USERNAME $PASSWORD
 	exit 0
 fi
 

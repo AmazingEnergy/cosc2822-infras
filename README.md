@@ -107,4 +107,11 @@ chmod +x ./scripts.sh
 
 ./scripts.sh --action search-ami
 
+./scripts.sh \
+  --action get-access-token \
+  --username <username> \
+  --password <password> \
+  --aws-profile cosc2825-devops01 \
+  --region ap-southeast-1
+
 ```

@@ -1,0 +1,228 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create DynamoDB tables
+
+Parameters:
+  MaxReadCapacityUnits:
+    Type: Number
+    Default: 10
+    Description: Number of read capacity units
+  MaxWriteCapacityUnits:
+    Type: Number
+    Default: 10
+    Description: Number of write capacity units
+
+Mappings:
+  Tables:
+    Product:
+      TableName: "Product"
+      PartitionKey: "parentSkuId"
+      PartitionKeyType: "S"
+      SortKey: "skuId"
+      SortKeyType: "S"
+      FirstGsiPartitionKey: "category"
+      FirstGsiPartitionKeyType: "S"
+      FirstGsiSortKey: "type"
+      FirstGsiSortKeyType: "S"
+      SecondGsiPartitionKey: "type"
+      SecondGsiPartitionKeyType: "S"
+      SecondGsiSortKey: "category"
+      SecondGsiSortKeyType: "S"
+    Inventory:
+      TableName: "Inventory"
+      PartitionKey: "stockCode"
+      PartitionKeyType: "S"
+    PromotionCode:
+      TableName: "PromotionCode"
+      PartitionKey: "code"
+      PartitionKeyType: "S"
+      SortKey: "availableFrom"
+      SortKeyType: "N"
+    PromotionRule:
+      TableName: "PromotionRule"
+      PartitionKey: "name"
+      PartitionKeyType: "S"
+      SortKey: "availableFrom"
+      SortKeyType: "N"
+
+Resources:
+  ProductTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName:
+        Fn::FindInMap: [Tables, Product, TableName]
+      AttributeDefinitions:
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, PartitionKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Product, PartitionKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, SortKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Product, SortKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, FirstGsiPartitionKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Product, FirstGsiPartitionKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, FirstGsiSortKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Product, FirstGsiSortKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, SecondGsiPartitionKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Product, SecondGsiPartitionKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, SecondGsiSortKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Product, SecondGsiSortKeyType]
+      KeySchema:
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, PartitionKey]
+          KeyType: HASH # Partition Key
+        - AttributeName:
+            Fn::FindInMap: [Tables, Product, SortKey]
+          KeyType: RANGE # Sort Key
+      BillingMode: PAY_PER_REQUEST
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref MaxReadCapacityUnits
+        MaxWriteRequestUnits: !Ref MaxWriteCapacityUnits
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName:
+                Fn::FindInMap: [Tables, Product, FirstGsiPartitionKey]
+              KeyType: HASH
+            - AttributeName:
+                Fn::FindInMap: [Tables, Product, FirstGsiSortKey]
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          OnDemandThroughput:
+            MaxReadRequestUnits: !Ref MaxReadCapacityUnits
+            MaxWriteRequestUnits: !Ref MaxWriteCapacityUnits
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName:
+                Fn::FindInMap: [Tables, Product, SecondGsiPartitionKey]
+              KeyType: HASH
+            - AttributeName:
+                Fn::FindInMap: [Tables, Product, SecondGsiSortKey]
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          OnDemandThroughput:
+            MaxReadRequestUnits: !Ref MaxReadCapacityUnits
+            MaxWriteRequestUnits: !Ref MaxWriteCapacityUnits
+      SSESpecification:
+        SSEEnabled: true
+
+  InventoryTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName:
+        Fn::FindInMap: [Tables, Inventory, TableName]
+      AttributeDefinitions:
+        - AttributeName:
+            Fn::FindInMap: [Tables, Inventory, PartitionKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, Inventory, PartitionKeyType]
+      KeySchema:
+        - AttributeName:
+            Fn::FindInMap: [Tables, Inventory, PartitionKey]
+          KeyType: HASH # Partition Key
+      BillingMode: PAY_PER_REQUEST
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref MaxReadCapacityUnits
+        MaxWriteRequestUnits: !Ref MaxWriteCapacityUnits
+      SSESpecification:
+        SSEEnabled: true
+
+  PromotionCodeTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName:
+        Fn::FindInMap: [Tables, PromotionCode, TableName]
+      AttributeDefinitions:
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionCode, PartitionKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, PromotionCode, PartitionKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionCode, SortKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, PromotionCode, SortKeyType]
+      KeySchema:
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionCode, PartitionKey]
+          KeyType: HASH # Partition Key
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionCode, SortKey]
+          KeyType: RANGE # Sort Key
+      BillingMode: PAY_PER_REQUEST
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref MaxReadCapacityUnits
+        MaxWriteRequestUnits: !Ref MaxWriteCapacityUnits
+      SSESpecification:
+        SSEEnabled: true
+
+  PromotionRuleTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName:
+        Fn::FindInMap: [Tables, PromotionRule, TableName]
+      AttributeDefinitions:
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionRule, PartitionKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, PromotionRule, PartitionKeyType]
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionRule, SortKey]
+          AttributeType:
+            Fn::FindInMap: [Tables, PromotionRule, SortKeyType]
+      KeySchema:
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionRule, PartitionKey]
+          KeyType: HASH # Partition Key
+        - AttributeName:
+            Fn::FindInMap: [Tables, PromotionRule, SortKey]
+          KeyType: RANGE # Sort Key
+      BillingMode: PAY_PER_REQUEST
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref MaxReadCapacityUnits
+        MaxWriteRequestUnits: !Ref MaxWriteCapacityUnits
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  ProductTableName:
+    Description: Name of the DynamoDB Product table
+    Value: !Ref ProductTable
+  ProductTableArn:
+    Description: ARN of the DynamoDB Product table
+    Value: !GetAtt ProductTable.Arn
+  InventoryTableName:
+    Description: Name of the DynamoDB Inventory table
+    Value: !Ref InventoryTable
+  InvetoryTableArn:
+    Description: ARN of the DynamoDB Inventory table
+    Value: !GetAtt InventoryTable.Arn
+  PromotionCodeTableName:
+    Description: Name of the DynamoDB PromotionCode table
+    Value: !Ref PromotionCodeTable
+  PromotionCodeTableArn:
+    Description: ARN of the DynamoDB PromotionCode table
+    Value: !GetAtt PromotionCodeTable.Arn
+  PromotionRuleTableName:
+    Description: Name of the DynamoDB PromotionRule table
+    Value: !Ref PromotionRuleTable
+  PromotionRuleTableArn:
+    Description: ARN of the DynamoDB PromotionRule table
+    Value: !GetAtt PromotionRuleTable.Arn
