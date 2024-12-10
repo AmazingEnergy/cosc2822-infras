@@ -150,17 +150,3 @@ Resources:
       ApiId:
         Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayId"
       Stage: !Ref DevStage
-
-Outputs:
-  TestEndpoint:
-    Description: RESTful annoymous test endpoint
-    Value:
-      Fn::Select:
-        - 0
-        - Fn::FindInMap: [Resources, Test, AnonymousTestEndpoint]
-  RestrictedTestEndpoint:
-    Description: RESTful restricted test endpoint
-    Value:
-      Fn::Select:
-        - 0
-        - Fn::FindInMap: [Resources, Test, RestrictedTestEndpoint]
