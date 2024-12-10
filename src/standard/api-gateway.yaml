@@ -53,7 +53,7 @@ Resources:
             - access-logs
       RetentionInDays: 1
 
-  ApiGatewayRole:
+  ApiGatewayAccessCloudWatchRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -67,6 +67,11 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - !Ref AmazonAPIGatewayPushToCloudWatchLogs
+
+  Account:
+    Type: "AWS::ApiGateway::Account"
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayAccessCloudWatchRole.Arn
 
   ###############################################
   # Custom Domain
