@@ -90,6 +90,8 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	./cli/002-run-cfn.sh cognito-stack src/standard/cognito.yaml src/standard/cognito-params.json $REGION
 	./cli/002-run-cfn.sh api-gateway-stack src/standard/api-gateway.yaml src/standard/api-gateway-params.json $REGION
 	./cli/002-run-cfn.sh apigw-test-api-stack src/standard/apigw-test-endpoint.yaml src/standard/apigw-test-endpoint.json $REGION
+
+	./cli/002-run-cfn.sh dynamodb-tables-stack src/standard/dynamodb-tables.yaml src/standard/dynamodb-tables-params.json $REGION
 	exit 0
 fi
 
@@ -106,7 +108,7 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	# delete applications
 	./cli/005-delete-stack.sh apigw-test-api-stack $REGION
 	# delete advanced stacks
-	# TODO: add here
+	./cli/005-delete-stack.sh dynamodb-tables-stack $REGION
 	# delete standard stacks
 	./cli/005-delete-stack.sh cloud-front-stack $REGION
 	./cli/005-delete-stack.sh static-website-stack $REGION
