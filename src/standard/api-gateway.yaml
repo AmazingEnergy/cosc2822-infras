@@ -35,6 +35,7 @@ Resources:
       IdentitySource: method.request.header.Authorization
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
+      IdentityValidationExpression: !Sub ".*${ApiGateway.RestApiId}.*"
 
   ###############################################
   # API Gateway Logging

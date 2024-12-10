@@ -69,6 +69,8 @@ Resources:
             method.response.header.Content-Type: true
       Integration:
         Type: "MOCK"
+        RequestTemplates:
+          "application/json": '{"statusCode": 200}'
         IntegrationResponses:
           - StatusCode: "200"
             ResponseParameters:
@@ -100,6 +102,8 @@ Resources:
             method.response.header.Content-Type: true
       Integration:
         Type: "MOCK"
+        RequestTemplates:
+          "application/json": '{"statusCode": 200}'
         IntegrationResponses:
           - StatusCode: "200"
             ResponseParameters:
