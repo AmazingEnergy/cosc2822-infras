@@ -139,7 +139,7 @@ Resources:
           ThrottlingRateLimit: 100
       AccessLogSetting:
         DestinationArn:
-          Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayIdLogGroupArn"
+          Fn::ImportValue: !Sub "${ApiGatewayStack}-ApiGatewayLogGroupArn"
         Format: $context.extendedRequestId $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId
 
   MyApiMapping:
