@@ -38,7 +38,9 @@
 				"route53domains:DeleteDomain",
 				"route53domains:DisableDomainAutoRenew",
 				"route53domains:RegisterDomain",
-				"route53:CreateHostedZone"
+				"route53:CreateHostedZone",
+				"ecr:*",
+				"ecs:*"
 			],
 			"Resource": "*"
 		}
