@@ -10,5 +10,9 @@
 	{
 		"ParameterKey": "ApiGatewayName",
 		"ParameterValue": "EasyShopAPI"
+	},
+	{
+		"ParameterKey": "AmazonAPIGatewayPushToCloudWatchLogs",
+		"ParameterValue": "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 	}
 ]

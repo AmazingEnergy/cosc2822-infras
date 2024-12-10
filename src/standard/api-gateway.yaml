@@ -11,6 +11,9 @@ Parameters:
   ApiGatewayName:
     Type: String
     Description: API Gateway name
+  AmazonAPIGatewayPushToCloudWatchLogs:
+    Type: String
+    Description: IAM Policy grant API Gateway permission to read and write logs to CloudWatch
 
 Resources:
   ###############################################
@@ -32,6 +35,10 @@ Resources:
       ProviderARNs:
         - Fn::ImportValue: !Sub "${CognitoStack}-CognitoUserPoolArn"
 
+  ###############################################
+  # API Gateway Logging
+  ###############################################
+
   # https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-using-cloudformation
 
   ApiGatewayLogGroup:
@@ -45,6 +52,21 @@ Resources:
           - - !Ref ApiGateway
             - access-logs
       RetentionInDays: 1
+
+  ApiGatewayRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - !Ref AmazonAPIGatewayPushToCloudWatchLogs
 
   ###############################################
   # Custom Domain
