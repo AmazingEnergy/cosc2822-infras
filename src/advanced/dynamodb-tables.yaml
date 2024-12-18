@@ -14,7 +14,7 @@ Parameters:
 Mappings:
   Tables:
     Product:
-      TableName: "Product"
+      TableName: "ProductV2"
       PartitionKey: "skuId"
       PartitionKeyType: "S"
       FirstGsiPartitionKey: "category"
