@@ -92,6 +92,9 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	./cli/002-run-cfn.sh apigw-test-api-stack src/standard/apigw-test-endpoint.yaml src/standard/apigw-test-endpoint.json $REGION
 
 	./cli/002-run-cfn.sh dynamodb-tables-stack src/advanced/dynamodb-tables.yaml src/advanced/dynamodb-tables-params.json $REGION
+  ./cli/002-run-cfn.sh network-stack src/advanced/network.yaml src/advanced/network-params.json $REGION
+  ./cli/002-run-cfn.sh rds-stack src/advanced/rds.yaml src/advanced/rds-params.json $REGION
+  ./cli/002-run-cfn.sh alb-stack src/advanced/alb.yaml src/advanced/alb-params.json $REGION
 	exit 0
 fi
 
@@ -109,6 +112,9 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	./cli/005-delete-stack.sh apigw-test-api-stack $REGION
 	# delete advanced stacks
 	./cli/005-delete-stack.sh dynamodb-tables-stack $REGION
+  ./cli/005-delete-stack.sh alb-stack $REGION
+  ./cli/005-delete-stack.sh rds-stack $REGION
+  ./cli/005-delete-stack.sh network-stack $REGION
 	# delete standard stacks
 	./cli/005-delete-stack.sh cloud-front-stack $REGION
 	./cli/005-delete-stack.sh static-website-stack $REGION

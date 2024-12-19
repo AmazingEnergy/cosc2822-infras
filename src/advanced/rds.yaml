@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create a MySQL Database
+
+Parameters:
+  NetworkStackName:
+    Type: String
+    Description: "Name of the Network Stack"
+  DBInstanceID:
+    Type: String
+    Default: EasyShopDatabase
+    Description: My database instance
+  DBName:
+    Type: String
+    Default: shopdb
+    Description: My database
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: DB instance class
+  DBAllocatedStorage:
+    Type: Number
+    Default: "20"
+    Description: The size of the database (GiB)
+  DBUsername:
+    Type: String
+    NoEcho: "true"
+    Default: "admin"
+    Description: Username for MySQL database access
+  DBPassword:
+    Type: String
+    NoEcho: "true"
+    Default: "s3951127!Passw0rd1!"
+    Description: Password MySQL database access
+
+Resources:
+  ###########################################
+  # RDS Database
+  ###########################################
+
+  MySQLDatabase:
+    Type: "AWS::RDS::DBInstance"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceID
+      Engine: "mysql"
+      EngineVersion: "8.0.39"
+      MultiAZ: true
+      DBInstanceClass: !Ref DBInstanceClass
+      StorageType: "gp2"
+      AllocatedStorage: 20
+      DBName: !Ref DBName
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBSubnetGroupName: !Ref MySQLSubnetGroup
+      VPCSecurityGroups:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-DbSecurityGroupId"
+      BackupRetentionPeriod: 1
+      Tags:
+        - Key: "Name"
+          Value: !Ref DBInstanceID
+
+  MySQLSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: "Subnet group for MySQL Database"
+      SubnetIds:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCSubnetPrivate1Id"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCSubnetPrivate2Id"
+
+  ###########################################
+  # Parameter Store
+  ###########################################
+
+  MySQLDatabaseEndpointParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/shop/dbUrl"
+      Type: "String"
+      Value: !GetAtt MySQLDatabase.Endpoint.Address
+
+  MySQLDatabasePortParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/shop/dbPort"
+      Type: "String"
+      Value: !GetAtt MySQLDatabase.Endpoint.Port
+
+  MySQLDatabaseNameParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/shop/dbName"
+      Type: "String"
+      Value: !Ref DBName
+
+  MySQLDatabaseUsernameParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/shop/dbUsername"
+      Type: "String"
+      Value: !Ref DBUsername
+
+  MySQLDatabasePasswordParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/shop/dbPassword"
+      Type: "String"
+      Value: !Ref DBPassword
+
+Outputs:
+  MySQLDatabaseEndpoint:
+    Description: "MySQL Database Endpoint"
+    Value: !GetAtt MySQLDatabase.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-MySQLDatabaseEndpoint"
+  MySQLDatabasePort:
+    Description: "MySQL Database Port"
+    Value: !GetAtt MySQLDatabase.Endpoint.Port
+    Export:
+      Name: !Sub "${AWS::StackName}-MySQLDatabasePort"

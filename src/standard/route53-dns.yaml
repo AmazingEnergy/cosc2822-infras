@@ -87,3 +87,9 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-ServiceDomainName"
+  AlbDomainName:
+    Value: !Sub "alb.${DomainName}"
+    Description: Domain name for ALB of ECS cluster
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AlbDomainName"

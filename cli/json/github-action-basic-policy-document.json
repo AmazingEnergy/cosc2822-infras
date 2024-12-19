@@ -41,7 +41,8 @@
         "route53:CreateHostedZone",
         "ecr:*",
         "ecs:*",
-        "cloudfront:CreateInvalidation"
+        "cloudfront:CreateInvalidation",
+        "apigateway:*"
       ],
       "Resource": "*"
     }

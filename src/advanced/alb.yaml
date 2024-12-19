@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create Application Load Balancer.
+
+Parameters:
+  Route53DNSStack:
+    Type: String
+    Description: "Name of the Route 53 DNS Stack"
+  NetworkStackName:
+    Type: String
+    Description: "Name of the Network Stack"
+
+Resources:
+  ###########################################
+  # Application Load Balancer
+  ###########################################
+
+  EcsALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: EcsALB
+      Type: application
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCSubnetPublic1Id"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCSubnetPublic2Id"
+      SecurityGroups:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-LoadBalancerSecurityGroupId"
+      Tags:
+        - Key: Name
+          Value: "DynamicAppALB"
+
+  ALBRecordSet:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
+      Name:
+        Fn::ImportValue: !Sub "${Route53DNSStack}-AlbDomainName"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt EcsALB.DNSName
+        HostedZoneId: !GetAtt EcsALB.CanonicalHostedZoneID
+
+  SSLCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName:
+        Fn::ImportValue: !Sub "${Route53DNSStack}-AlbDomainName"
+      ValidationMethod: "DNS"
+      DomainValidationOptions:
+        - DomainName:
+            Fn::ImportValue: !Sub "${Route53DNSStack}-AlbDomainName"
+          HostedZoneId:
+            Fn::ImportValue: !Sub "${Route53DNSStack}-HostedZoneId"
+      Tags:
+        - Key: Name
+          Value: "SSLCertificate"
+
+  HttpEcsTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: HttpDynamicAppTargetGroup
+      Port: 80
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCId"
+      TargetType: instance
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-399
+      Tags:
+        - Key: Name
+          Value: "HttpDynamicAppTargetGroup"
+
+  HttpEcsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref HttpEcsTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref EcsALB
+      Port: 80
+      Protocol: HTTP
+
+  HttpsEcsTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: HttpsDynamicAppTargetGroup
+      Port: 443
+      Protocol: HTTPS
+      VpcId:
+        Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCId"
+      TargetType: instance
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTPS
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-399
+      Tags:
+        - Key: Name
+          Value: "HttpsDynamicAppTargetGroup"
+
+  HttpsEcsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref HttpsEcsTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref EcsALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref SSLCertificate
+      SslPolicy: ELBSecurityPolicy-2016-08
+
+Outputs:
+  EcsALBArn:
+    Description: "ECS ALB"
+    Value: !GetAtt EcsALB.LoadBalancerArn
+    Export:
+      Name: !Sub "${AWS::StackName}-EcsALBArn"
+  EcsALBDNSName:
+    Description: "ECS ALB DNS Name"
+    Value: !GetAtt EcsALB.DNSName
+    Export:
+      Name: !Sub "${AWS::StackName}-EcsALBDNSName"
+  EcsALBHostedZoneId:
+    Description: "ECS ALB Hosted Zone Id"
+    Value: !GetAtt EcsALB.CanonicalHostedZoneID
+    Export:
+      Name: !Sub "${AWS::StackName}-EcsALBHostedZoneId"
+  HttpEcsALBListenerArn:
+    Description: "ECS ALB Listener Arn"
+    Value: !GetAtt HttpEcsListener.ListenerArn
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpEcsALBListenerArn"
+  HttpsEcsALBListenerArn:
+    Description: "ECS ALB Listener Arn"
+    Value: !GetAtt HttpsEcsListener.ListenerArn
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpsEcsALBListenerArn"
+  HttpEcsTargetGroupArn:
+    Description: "ECS ALB Target Group Arn"
+    Value: !GetAtt HttpEcsTargetGroup.TargetGroupArn
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpEcsTargetGroupArn"
+  HttpsEcsTargetGroupArn:
+    Description: "ECS ALB Target Group Arn"
+    Value: !GetAtt HttpsEcsTargetGroup.TargetGroupArn
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpsEcsTargetGroupArn"

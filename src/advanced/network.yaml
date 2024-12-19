@@ -1,0 +1,352 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create VPC, and Security Group.
+
+Parameters:
+  VpcName:
+    Type: String
+    Default: "Asm3LabVPC"
+    Description: "Name of the VPC"
+
+Resources:
+  ###########################################
+  # VPC
+  ###########################################
+
+  LabVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.0.0.0/22"
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      Tags:
+        - Key: "Name"
+          Value: !Ref VpcName
+
+  LabVPCInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-igw"
+
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref LabVPC
+      InternetGatewayId: !Ref LabVPCInternetGateway
+
+  ###########################################
+  # Subnets
+  ###########################################
+
+  LabVPCSubnetPublic1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !GetAtt LabVPC.VpcId
+      CidrBlock: "10.0.0.0/26"
+      MapPublicIpOnLaunch: true
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-subnet-public1"
+
+  LabVPCSubnetPublic2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !GetAtt LabVPC.VpcId
+      CidrBlock: "10.0.0.64/26"
+      MapPublicIpOnLaunch: true
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-subnet-public2"
+
+  LabVPCSubnetPrivate1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !GetAtt LabVPC.VpcId
+      CidrBlock: "10.0.0.128/26"
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-subnet-private1"
+
+  LabVPCSubnetPrivate2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !GetAtt LabVPC.VpcId
+      CidrBlock: "10.0.0.192/26"
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-subnet-private2"
+
+  ###########################################
+  # Route Tables
+  ###########################################
+
+  LabVPCRouteTablePublic:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref LabVPC
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-rtb-public"
+
+  LabVPCRouteTablePublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
+    Properties:
+      RouteTableId: !Ref LabVPCRouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref LabVPCInternetGateway
+
+  LabVPCRouteTablePrivate:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref LabVPC
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${VpcName}-rtb-private"
+
+  LabVPCSubnet1RouteTablePublicAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref LabVPCSubnetPublic1
+      RouteTableId: !Ref LabVPCRouteTablePublic
+
+  LabVPCSubnet2RouteTablePublicAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref LabVPCSubnetPublic2
+      RouteTableId: !Ref LabVPCRouteTablePublic
+
+  LabVPCSubnet1RouteTablePrivateAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref LabVPCSubnetPrivate1
+      RouteTableId: !Ref LabVPCRouteTablePrivate
+
+  LabVPCSubnet2RouteTablePrivateAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref LabVPCSubnetPrivate2
+      RouteTableId: !Ref LabVPCRouteTablePrivate
+
+  ###########################################
+  # VPC Endpoints
+  ###########################################
+
+  SSMInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  SSMMessageInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  EC2MessageInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2messages"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  EC2InterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  STSInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.sts"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  ###########################################
+  # Security Groups
+  ###########################################
+
+  LabVPCEndpointSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allow HTTPS traffic from the VPC"
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !GetAtt LabVPC.CidrBlock
+      Tags:
+        - Key: "Name"
+          Value: "VpcEndpointSG"
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and HTTPS access
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0 # Allow HTTP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0 # Allow HTTPS
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0 # Allow all outbound traffic
+      Tags:
+        - Key: "Name"
+          Value: "AlbSG"
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and HTTPS access from application load balancer
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0 # Allow HTTP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0 # Allow HTTPS
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0 # Allow all outbound traffic
+      Tags:
+        - Key: "Name"
+          Value: "AppSG"
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow MySQL access from private web server
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !GetAtt AppSecurityGroup.GroupId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0 # Allow all outbound traffic
+      Tags:
+        - Key: "Name"
+          Value: "DbSG"
+
+Outputs:
+  LabVPCId:
+    Description: The ID of the LabVPC
+    Value: !GetAtt LabVPC.VpcId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-LabVPCId"
+  LabVPCCIDR:
+    Description: The ID of the LabVPC
+    Value: !GetAtt LabVPC.DefaultSecurityGroup
+  LabVPCSubnetPublic1Id:
+    Description: The ID of public subnet 1
+    Value: !GetAtt LabVPCSubnetPublic1.SubnetId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-LabVPCSubnetPublic1Id"
+  LabVPCSubnetPublic2Id:
+    Description: The ID of public subnet 2
+    Value: !GetAtt LabVPCSubnetPublic2.SubnetId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-LabVPCSubnetPublic2Id"
+  LabVPCSubnetPrivate1Id:
+    Description: The ID of private subnet 1
+    Value: !GetAtt LabVPCSubnetPrivate1.SubnetId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-LabVPCSubnetPrivate1Id"
+  LabVPCSubnetPrivate2Id:
+    Description: The ID of private subnet 2
+    Value: !GetAtt LabVPCSubnetPrivate2.SubnetId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-LabVPCSubnetPrivate2Id"
+  LoadBalancerSecurityGroupId:
+    Description: The ID of load balancer security group
+    Value: !GetAtt LoadBalancerSecurityGroup.GroupId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-LoadBalancerSecurityGroupId"
+  AppSecurityGroupId:
+    Description: The ID of application security group
+    Value: !GetAtt AppSecurityGroup.GroupId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AppSecurityGroupId"
+  DbSecurityGroupId:
+    Description: The ID of database security group
+    Value: !GetAtt DatabaseSecurityGroup.GroupId
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DbSecurityGroupId"
