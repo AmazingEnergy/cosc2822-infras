@@ -215,6 +215,56 @@ Resources:
       SecurityGroupIds:
         - !Ref LabVPCEndpointSecurityGroup
 
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Gateway
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref LabVPC
+      RouteTableIds:
+        - !Ref LabVPCRouteTablePrivate
+
+  S3InterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    DependsOn:
+      - S3GatewayEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  ECRApiInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  ECRDkrInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
   ###########################################
   # Security Groups
   ###########################################
