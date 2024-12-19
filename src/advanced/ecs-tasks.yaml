@@ -104,7 +104,7 @@ Resources:
           TargetGroupArn:
             Fn::ImportValue: !Sub "${AlbStackName}-HttpEcsTargetGroupArn"
         - ContainerName: !Ref TaskContainerName
-          ContainerPort: 443
+          ContainerPort: 80
           TargetGroupArn:
             Fn::ImportValue: !Sub "${AlbStackName}-HttpsEcsTargetGroupArn"
       ServiceConnectConfiguration:
@@ -116,8 +116,6 @@ Resources:
             DiscoveryName: !Ref TaskFamily
             ClientAliases:
               - Port: 80
-                DnsName: !Ref TaskFamily
-              - Port: 443
                 DnsName: !Ref TaskFamily
         LogConfiguration:
           LogDriver: "awslogs"
