@@ -100,6 +100,8 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
   sed -i -e "s/<NetworkStackName>/network-stack/g" ./src/advanced/alb-params.json
   sed -i -e "s/<Route53DNSStack>/route53-dns-stack/g" ./src/advanced/alb-params.json
   ./cli/002-run-cfn.sh alb-stack src/advanced/alb.yaml src/advanced/alb-params.json $REGION
+
+  ./cli/002-run-cfn.sh ecs-cluster-stack src/advanced/ecs-cluster.yaml src/advanced/ecs-cluster-params.json $REGION
 	exit 0
 fi
 
@@ -116,6 +118,7 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 	# delete applications
 	./cli/005-delete-stack.sh apigw-test-api-stack $REGION
 	# delete advanced stacks
+  ./cli/005-delete-stack.sh ecs-cluster-stack $REGION
 	./cli/005-delete-stack.sh dynamodb-tables-stack $REGION
   ./cli/005-delete-stack.sh alb-stack $REGION
   ./cli/005-delete-stack.sh rds-stack $REGION

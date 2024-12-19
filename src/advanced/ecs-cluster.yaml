@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AWS CloudFormation template for creating an ECS cluster"
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: "Name of the ECS cluster"
+    Default: "EasyShopCluster"
+  Namespace:
+    Type: String
+    Description: "Namespace for the ECS cluster"
+    Default: "easyshop"
+
+Resources:
+  ECSCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: !Ref ClusterName
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 70
+          Base: 20
+        - CapacityProvider: FARGATE_SPOT
+          Weight: 30
+      ServiceConnectDefaults:
+        Namespace: !Ref Namespace
+      Configuration:
+        ExecuteCommandConfiguration:
+          Logging: OVERRIDE
+          LogConfiguration:
+            CloudWatchLogGroupName: !Ref ECSLogGroup
+            CloudWatchEncryptionEnabled: false
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+
+  ECSLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/ecs/${ClusterName}"
+      RetentionInDays: 7
+
+Outputs:
+  ECSClusterArn:
+    Description: "ECS Cluster"
+    Value: !GetAtt ECSCluster.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSClusterArn"
+  ECSNamespace:
+    Description: "ECS Namespace"
+    Value: !Ref Namespace
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSNamespace"
