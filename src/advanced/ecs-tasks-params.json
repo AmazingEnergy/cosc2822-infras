@@ -10,13 +10,5 @@
   {
     "ParameterKey": "AlbStackName",
     "ParameterValue": "<AlbStackName>"
-  },
-  {
-    "ParameterKey": "TaskContainerImageUrl",
-    "ParameterValue": "<TaskContainerImageUrl>"
-  },
-  {
-    "ParameterKey": "TaskContainerImageTag",
-    "ParameterValue": "<TaskContainerImageTag>"
   }
 ]
