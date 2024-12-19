@@ -265,6 +265,32 @@ Resources:
       SecurityGroupIds:
         - !Ref LabVPCEndpointSecurityGroup
 
+  CloudWatchLogsInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
+  CloudWatchMonitoringInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.monitoring"
+      VpcId: !Ref LabVPC
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref LabVPCSubnetPrivate1
+        - !Ref LabVPCSubnetPrivate2
+      SecurityGroupIds:
+        - !Ref LabVPCEndpointSecurityGroup
+
   ###########################################
   # Security Groups
   ###########################################
