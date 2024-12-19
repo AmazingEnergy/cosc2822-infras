@@ -59,7 +59,7 @@ Resources:
   HttpEcsTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: HttpDynamicAppTargetGroup
+      Name: HttpDynamicAppTargetGroup2
       Port: 80
       Protocol: HTTP
       VpcId:
@@ -92,7 +92,7 @@ Resources:
   HttpsEcsTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: HttpsDynamicAppTargetGroup
+      Name: HttpsDynamicAppTargetGroup2
       Port: 443
       Protocol: HTTPS
       VpcId:
