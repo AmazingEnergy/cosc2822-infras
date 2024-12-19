@@ -75,35 +75,35 @@ Resources:
   MySQLDatabaseEndpointParameter:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: "/shop/dbUrl"
+      Name: "/easyShop/dbUrl"
       Type: "String"
       Value: !GetAtt MySQLDatabase.Endpoint.Address
 
   MySQLDatabasePortParameter:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: "/shop/dbPort"
+      Name: "/easyShop/dbPort"
       Type: "String"
       Value: !GetAtt MySQLDatabase.Endpoint.Port
 
   MySQLDatabaseNameParameter:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: "/shop/dbName"
+      Name: "/easyShop/dbName"
       Type: "String"
       Value: !Ref DBName
 
   MySQLDatabaseUsernameParameter:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: "/shop/dbUsername"
+      Name: "/easyShop/dbUsername"
       Type: "String"
       Value: !Ref DBUsername
 
   MySQLDatabasePasswordParameter:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: "/shop/dbPassword"
+      Name: "/easyShop/dbPassword"
       Type: "String"
       Value: !Ref DBPassword
 
