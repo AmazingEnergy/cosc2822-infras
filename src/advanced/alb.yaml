@@ -64,7 +64,7 @@ Resources:
       Protocol: HTTP
       VpcId:
         Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCId"
-      TargetType: instance
+      TargetType: ip
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: /
@@ -97,7 +97,7 @@ Resources:
       Protocol: HTTPS
       VpcId:
         Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCId"
-      TargetType: instance
+      TargetType: ip
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: /
