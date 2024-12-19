@@ -93,7 +93,12 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 
 	./cli/002-run-cfn.sh dynamodb-tables-stack src/advanced/dynamodb-tables.yaml src/advanced/dynamodb-tables-params.json $REGION
   ./cli/002-run-cfn.sh network-stack src/advanced/network.yaml src/advanced/network-params.json $REGION
+
+	sed -i -e "s/<NetworkStackName>/network-stack/g" ./src/advanced/rds-params.json
   ./cli/002-run-cfn.sh rds-stack src/advanced/rds.yaml src/advanced/rds-params.json $REGION
+
+  sed -i -e "s/<NetworkStackName>/network-stack/g" ./src/advanced/alb-params.json
+  sed -i -e "s/<Route53DNSStack>/route53-dns-stack/g" ./src/advanced/alb-params.json
   ./cli/002-run-cfn.sh alb-stack src/advanced/alb.yaml src/advanced/alb-params.json $REGION
 	exit 0
 fi
