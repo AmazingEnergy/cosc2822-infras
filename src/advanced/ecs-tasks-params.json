@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "ClusterStackName",
+    "ParameterValue": "<ClusterStackName>"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "<NetworkStackName>"
+  },
+  {
+    "ParameterKey": "AlbStackName",
+    "ParameterValue": "<AlbStackName>"
+  },
+  {
+    "ParameterKey": "TaskContainerImageUrl",
+    "ParameterValue": "<TaskContainerImageUrl>"
+  },
+  {
+    "ParameterKey": "TaskContainerImageTag",
+    "ParameterValue": "<TaskContainerImageTag>"
+  }
+]
