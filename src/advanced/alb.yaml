@@ -66,7 +66,7 @@ Resources:
         Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCId"
       TargetType: ip
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 30
+      HealthCheckIntervalSeconds: 120
       HealthCheckPath: /
       HealthCheckPort: traffic-port
       HealthCheckProtocol: HTTP
@@ -99,10 +99,10 @@ Resources:
         Fn::ImportValue: !Sub "${NetworkStackName}-LabVPCId"
       TargetType: ip
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 30
+      HealthCheckIntervalSeconds: 120
       HealthCheckPath: /
       HealthCheckPort: traffic-port
-      HealthCheckProtocol: HTTPS
+      HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 2
@@ -116,7 +116,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref HttpsEcsTargetGroup
+        - TargetGroupArn: !Ref HttpEcsTargetGroup
           Type: forward
       LoadBalancerArn: !Ref EcsALB
       Port: 443
