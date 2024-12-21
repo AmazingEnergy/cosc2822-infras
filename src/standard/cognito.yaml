@@ -64,6 +64,24 @@ Resources:
         - !Sub "https://${ClientAppDomainName}/logout"
 
   ###############################################
+  # SSM Parameters
+  ###############################################
+
+  CognitoUserPoolIssuerParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /shop/auth/issuer
+      Type: String
+      Value: !GetAtt CognitoUserPool.ProviderURL
+
+  CognitoUserPoolAudiennceParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /shop/auth/audience
+      Type: String
+      Value: !GetAtt CognitoUserPoolClient.ClientId
+
+  ###############################################
   # Cognito Groups & Users
   ###############################################
 
