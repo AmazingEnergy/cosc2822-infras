@@ -38,6 +38,8 @@ Resources:
           - Priority: 1
             Name: verified_email
 
+  # https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html
+
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -54,6 +56,7 @@ Resources:
         - email
         - openid
         - profile
+        - aws.cognito.signin.user.admin
       CallbackURLs:
         - https://oauth.pstmn.io/v1/callback
         - !Sub "https://${ClientAppDomainName}/callback"
