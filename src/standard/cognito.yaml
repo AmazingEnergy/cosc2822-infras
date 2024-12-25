@@ -26,6 +26,8 @@ Resources:
           RequireSymbols: false
       AutoVerifiedAttributes:
         - email
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
       Schema:
         - Name: email
           AttributeDataType: String

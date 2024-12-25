@@ -42,7 +42,8 @@
         "ecr:*",
         "ecs:*",
         "cloudfront:CreateInvalidation",
-        "apigateway:*"
+        "apigateway:*",
+        "cognito-idp:*"
       ],
       "Resource": "*"
     }
