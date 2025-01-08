@@ -31,6 +31,7 @@ while [[ "$#" -gt 0 ]]; do
     --github-org) GITHUB_ORG="$2"; shift ;;
     --username) USERNAME="$2"; shift ;;
     --password) PASSWORD="$2"; shift ;;
+    --env) ENVIRONMENT="$2"; shift ;;
     *) POSITIONAL+=("$1") ;; # Collect positional arguments
   esac
   shift
@@ -142,18 +143,24 @@ if [[ "$ACTION" == "destroy-all-stacks" ]]; then
 fi
 
 if [[ "$ACTION" == "deploy-all-master-stacks" ]]; then
-	sed -i -e "s/<NameServers>/$ROUTE53_NAME_SERVERS/g" ./src/master/route53-dns-params.json
+  ENVIRONMENT=${ENVIRONMENT:-"master"}
+  echo "Deploying $ENVIRONMENT stacks"
 
 	chmod +x ./cli/002-run-cfn.sh
-	./cli/002-run-cfn.sh master-route53-dns-stack src/master/route53-dns.yaml src/master/route53-dns-params.json $REGION
-	./cli/002-run-cfn.sh master-acm-certificate-stack src/master/acm-certificate.yaml src/master/acm-certificate-params.json $REGION
+  sed -i -e "s/<DomainName>/$ROUTE53_DOMAIN_NAME/g" ./src/master/route53-dns-params.json
+	sed -i -e "s/<NameServers>/$ROUTE53_NAME_SERVERS/g" ./src/master/route53-dns-params.json
+	./cli/002-run-cfn.sh "$ENVIRONMENT-route53-dns-stack" src/master/route53-dns.yaml src/master/route53-dns-params.json $REGION
+	# ./cli/002-run-cfn.sh "$ENVIRONMENT-acm-certificate-stack" src/master/acm-certificate.yaml src/master/acm-certificate-params.json $REGION
 	exit 0
 fi
 
 if [[ "$ACTION" == "destroy-all-master-stacks" ]]; then
+  ENVIRONMENT=${ENVIRONMENT:-"master"}
+  echo "Destroying $ENVIRONMENT stacks"
+
 	chmod +x ./cli/005-delete-stack.sh
-	./cli/005-delete-stack.sh master-route53-dns-stack $REGION
-	./cli/005-delete-stack.sh master-acm-certificate-stack $REGION
+	./cli/005-delete-stack.sh "$ENVIRONMENT-route53-dns-stack" $REGION
+	# ./cli/005-delete-stack.sh "$ENVIRONMENT-acm-certificate-stack" $REGION
 	exit 0
 fi
 
