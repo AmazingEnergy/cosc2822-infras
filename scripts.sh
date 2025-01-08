@@ -49,12 +49,12 @@ if [ -n "$AWS_PROFILE" ]; then
 	unset AWS_SECRET_ACCESS_KEY
 	unset AWS_DEFAULT_PROFILE
 	export AWS_DEFAULT_PROFILE=$AWS_PROFILE
-	echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
-	echo ""
+	# echo "Set default AWS CLI profile ${AWS_DEFAULT_PROFILE}"
+	# echo ""
 fi
 
-chmod +x ./cli/013-check-iam-caller.sh
-./cli/013-check-iam-caller.sh
+# chmod +x ./cli/013-check-iam-caller.sh
+# ./cli/013-check-iam-caller.sh
 
 #######################################################
 # Deployment
@@ -62,15 +62,20 @@ chmod +x ./cli/013-check-iam-caller.sh
 
 if [[ "$ACTION" == "deploy-before-master" ]]; then
 	chmod +x ./cli/002-run-cfn.sh
+
+  sed -i -e "s/<DomainName>/$ROUTE53_DOMAIN_NAME/g" ./src/standard/s3-static-website-params.json
 	./cli/002-run-cfn.sh static-website-stack src/standard/s3-static-website.yaml src/standard/s3-static-website-params.json $REGION
+
+  sed -i -e "s/<DomainName>/$ROUTE53_DOMAIN_NAME/g" ./src/standard/route53-dns-params.json
 	./cli/002-run-cfn.sh route53-dns-stack src/standard/route53-dns.yaml src/standard/route53-dns-params.json $REGION
 	exit 0
 fi
 
 if [[ "$ACTION" == "deploy-after-master" ]]; then
-	DOMAIN_NAME=$(./cli/008-get-cfn-output.sh route53-dns-stack WildcardDomainName $REGION)
+	DOMAIN_NAME=$(./cli/008-get-cfn-output.sh route53-dns-stack DomainName $REGION)
+	WILDCARD_DOMAIN_NAME=$(./cli/008-get-cfn-output.sh route53-dns-stack WildcardDomainName $REGION)
 	HOSTED_ZONE_ID=$(./cli/008-get-cfn-output.sh route53-dns-stack HostedZoneId $REGION)
-	sed -i -e "s/<DomainName>/$DOMAIN_NAME/g" ./src/standard/acm-certificate-params.json
+	sed -i -e "s/<DomainName>/$WILDCARD_DOMAIN_NAME/g" ./src/standard/acm-certificate-params.json
 	sed -i -e "s/<HostedZoneId>/$HOSTED_ZONE_ID/g" ./src/standard/acm-certificate-params.json
 
 	chmod +x ./cli/002-run-cfn.sh
@@ -87,7 +92,10 @@ if [[ "$ACTION" == "deploy-after-master" ]]; then
 	sed -i -e "s/<ApiGatewayStack>/api-gateway-stack/g" ./src/standard/apigw-test-endpoint.json
 
 	./cli/002-run-cfn.sh cloud-front-stack src/standard/cloud-front.yaml src/standard/cloud-front-params.json $REGION
+
+  sed -i -e "s/<DomainName>/$DOMAIN_NAME/g" ./src/standard/cognito-params.json
 	./cli/002-run-cfn.sh cognito-stack src/standard/cognito.yaml src/standard/cognito-params.json $REGION
+
 	./cli/002-run-cfn.sh api-gateway-stack src/standard/api-gateway.yaml src/standard/api-gateway-params.json $REGION
 	./cli/002-run-cfn.sh apigw-test-api-stack src/standard/apigw-test-endpoint.yaml src/standard/apigw-test-endpoint.json $REGION
 
@@ -237,6 +245,12 @@ if [[ "$ACTION" == "get-access-token" ]]; then
 	exit 0
 fi
 
+
+if [[ "$ACTION" == "get-stack-output" ]]; then
+  chmod +x ./cli/008-get-cfn-output.sh
+  ./cli/008-get-cfn-output.sh $CFN_STACK_NAME $CFN_OUTPUT_KEY $REGION
+	exit 0
+fi
 
 ###########################################################################
 # Management

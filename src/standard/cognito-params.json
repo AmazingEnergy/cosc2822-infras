@@ -1,6 +1,6 @@
 [
 	{
 		"ParameterKey": "ClientAppDomainName",
-		"ParameterValue": "app.dev.grp6asm3.com"
+		"ParameterValue": "app.<DomainName>"
 	}
 ]

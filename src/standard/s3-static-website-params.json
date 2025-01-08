@@ -1,6 +1,6 @@
 [
-	{
-		"ParameterKey": "StaticWebsiteBucketName",
-		"ParameterValue": "app.dev.grp6asm3.com"
-	}
+  {
+    "ParameterKey": "StaticWebsiteBucketName",
+    "ParameterValue": "app.<DomainName>"
+  }
 ]

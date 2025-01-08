@@ -5,7 +5,7 @@
 	},
 	{
 		"ParameterKey": "SubdomainName",
-		"ParameterValue": "dev.grp6asm3.com"
+		"ParameterValue": "<DomainName>"
 	},
 	{
 		"ParameterKey": "NameServers",
